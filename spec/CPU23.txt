@@ -1,0 +1,244 @@
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
+
+
+
+	+--------------------------------------------------------------+
+	|                                                              |
+	|   CPU23 Conspiracy Processing Unit                           |
+	|       an esoteric 23-bit processing unit                     |
+	|                                                              |
+	| by                                                           |
+	|     Hanno Sternberg <hanno@almostintelligent.de>             |
+	|                                                   (c) 2012   |
+	|                                                              |
+	+--------------------------------------------------------------+
+
+
+# === SUMMARY ==================================================================
+
+- Wordsize:
+	* 24 bit words (WORD) with None-Execution bit 
+		-> 23 bit usable data
+- 15 WORD processor registers
+	* 10 Data registers (R0-R9)
+	* 1 Extend register (RX)
+	* 1 Status register (SR)
+	* 1 Interrupt handler (IH)
+	* 1 Stack pointer (SP)
+	* 1 Programm counter (PC)
+- Up to 2^23 WORDS of internal Memory (IM)
+	* Basic operating system (BM)
+	* programm memory (PM)
+	* stack memory (SM)
+- Up to 2^23 WORDS of external Memory (EM) 
+	* Blockwise access 
+	* R/W up to 31 words at a time
+- Integrated text display driver
+	* ASCII compatible
+	* Fixed size 80x30 character display with buffer memory (DM)
+The document will use the following short hand forms:
+	 a  - Just the value a.
+	(a) - The value of register a.
+	[a] - The value at the address from register a.
+
+
+# === STATUS REGISTER ==========================================================
+
+	 23  22  21  20  19  18  17  16
+	+---+---+---+---+---+---+---+---+--- ... ---+
+	| 1 | G | L | E | N | Z | C | V |           |
+	+---+---+---+---+---+---+---+---+--- ... ---+
+
+- G: Greater
+- L: Less
+- E: Equal
+- N: Negative
+- Z: Zero
+- C: Carry
+- V: Overflow
+	
+
+# === INSTRUCTION SET ==========================================================
+
+Each instruction is composed by to operand selectors (a, b) and an opcode.
+Additionally there can be a constant value (c).
+Each operand selection can have a post de-/increment or an 6 bit index.
+
+	 23  22        18 17  16 15     12 11  10 09     06 05     00
+	+---+------------+------+---------+------+---------+---------+
+	| 0 |   OPCODE   |  Ia  |    A    |  Ib  |    B    |    C    |
+	+---+------------+------+---------+------+---------+---------+
+	
+The index Ix can have 7 different values.
+
+	Value	Description
+	-----	-----------
+	0x00	No Indexing: (x)
+	0x01	Index by `C`: [x+C]
+	0x02	Post-Increment (x)
+	0x03	Post-Decrement (x)
+	0x04	Pre-Increment (x)
+	0x05	Pre-Decrement (x)
+	0x08	
+	0x07	Treat B and C as one big constant (Ib only).
+
+	
+## --- REGISTER SELECTION ------------------------------------------------------
+
+The 16 processor registers can be selected by a 4 bit value.
+
+	Value	Short	Description
+	-----	-----	-----------
+	0x00	R0	Data register 0
+	0x01	R1	Data register 1
+	0x02	R2	Data register 2
+	0x03	R3	Data register 3
+	0x04	R4	Data register 4
+	0x05	R5	Data register 5
+	0x06	R6	Data register 6
+	0x07	R7	Data register 7
+	0x08	R8	Data register 8
+	0x09	R9	Data register 9
+	0x0A	RX	Extend register
+	0x0B	IH	Interrupt handler
+	0x0C	SR	Status register
+	0x0D	SP	Stack pointer
+	0x0E	DP	Display pointer
+	0x0F	PC	Programm counter
+	
+	
+## --- OPCODES -----------------------------------------------------------------
+
+Every OpCode has a fixed length of 5 bit. 
+
+	Value	Name		Description
+	-----	----		-----------
+	0x00	NOP		No Operation.
+	0x01	LD  a b	c	Load [a] to (b).
+	0x02	STR a b	c	Stores (a) to [b].
+	0x03	CP  a b	c	Copy (a) to (b).
+	0x04	SET a b		Set bit b in (a).
+	0x05	RST a b		Reset bit b in (a).
+	0x06	PSH a		Push (a) onto the stack.
+				This operation decrements the stack pointer.
+	0x07	POP a		Pop last stack entry to (a).
+				This operation increments the stack pointer.
+	0x08	INC a		Increments (a).
+	0x09	DEC a		Decrements (a).
+	0x0A	ADD a b	c	Sets (a) to (a) + (b). 
+	0x0B	SUB a b	c	Sets (a) to (a) - (b). 
+	0x0C	LSL a b	c	Sets (a) to (a) << b (logical shift).
+	0x0D	LSR a b	c	Sets (a) to (a) >> b (logical shift).
+	0x0E	AND a b	c	Sets (a) to (a) & (b).
+	0x0F	OR  a b	c	Sets (a) to (a) | (b).
+	0x10	XOR a b	c	Sets (a) to (a) ^ (b).
+	0x11	NOT a	c	Inverts (a).
+	0x12	CMP a b	c	Compares (a) and (b) and set the flags in SR.
+	0x13	TST a		Sets the Z-Flag or the N-Flag in SR, 
+				based on (a).
+	0x14	JMP a b	c	Unconditional jump to (a) with offset b.
+	0x15	BRA a b	c	Branch to (b), if Flag b is set in SR.
+	0x16	CLL a		Call subroutine (a).
+	0x17	BRS a b		Branch subroutine (b), if Flag a is set in SR.
+				Pushes the current PC to the stack.
+	0x18	RTS		Return from subroutine. 
+				Pops the PC from the stack.
+	0x19	DSP a b		Write [a] at position defined by [b]. 
+				Increment DP afterwards.
+	0x1A	EMW a b c	Write c words starting at [a] to block [b] on MD.
+	0x1B	EMR a b c	Read c words from block [b] to [a] and following.
+	0x1C	
+	0x1D	
+	0x1E	
+	0x1F	
+
+
+# === MEMORY ===================================================================
+
+The memory is organised in four main blocks.
+
+1. Block: Basic operating system, hardware addresses and interrupt handler
+2. Block: Mixed programm an data memory
+3. Block: Stack
+4. Block: Display memory
+
+	+--------------------+ 0x000000
+	|                    |
+	|      BasOpSys      |
+	|                    |
+	+--------------------+ 0x0003FF
+	|       Memory       |
+	|      _ _ _ _ _     |
+	|     v v v v v v    |
+	.                    .
+	.                    .
+	+--------------------+ (SP)
+	.                    .
+	.                    .
+	|     ^_^_^_^_^_^    |
+	|                    |
+	|        Stack       |
+	+--------------------+ 0x7FF600
+	|                    |
+	|   Display Memory   |
+	|                    |
+	+--------------------+ 0x7FFFFF
+
+
+Every WORD in the memory has a length of 24 bit, but only the first 23 bits can 
+be written by the software. 
+The first bit can only written while programming to prevent execution of data 
+as a command word.	
+	
+# === DISPLAY ==================================================================
+
+The CPU23 has an integrated text display driver.
+
+An integrated VGA controller supports a fixed resolution of 640x480 pixels with 
+a colordepth of 12-Bit per pixel.
+
+Every character has a dimension of 8x16 resulting in a display size of 80x30 
+characters.
+
+One WORD of display memory is split in four parts. The leftmost 7-bits define 
+the character. The next 12-bits define the color, split up in 4-bit values for 
+red, green and blue.
+
+	 23  22   20 19   16 15   12 11   08 07       00
+	+---+-------+-------+-------+-------+-----------+
+	| 0 |       | BLUE  | GREEN |  RED  | CHARACTER |
+	+---+-------+-------+-------+-------+-----------+
+
+
+# --- CHARACTER SET ------------------------------------------------------------
+
+The character set is ASCII compatible.
+
+	   | …0  …1  …2  …3  …4  …5  …6  …7  …8  …9  …A  …B  …C  …D  …E  …F
+	---+---------------------------------------------------------------
+	0… |                                                               
+	1… |                                                               
+	2… | SP  !   "	 #   $   %   &   '   (   )   *   +   ,   -   .   / 
+	3… | 0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ? 
+	4… | @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O 
+	5… | P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _ 
+	6… | `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o 
+	7… | p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~     
+
+
+
+# --- COLORS -------------------------------------------------------------------
+
+The color has a depth of 12-bits for the three colors red, green and blue.
+As the VGA-Signal have 10-Bit per channel, the seperate colors get expand by 
+stretching the 4-bit to 8-bit values. Afterwards the are shifted by two, since 
+the lower values can hardly be separated. A value of 0xF gets expanded to 0x3FC.
+
+Colors can be displayed by #BGR constants.
+
+
+
+
+
+
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
