@@ -63,7 +63,7 @@ Each instruction is composed by to operand selectors (a, b) and an opcode.
 Additionally there can be a constant value (c).
 Each operand selection can have a post de-/increment or an 6 bit index.
 
-	 23  22        18 17  15 14     11 10  08 07     03 02     00
+	 23  22        18 17  15 14     11 10  08 07     04 03     00
 	+---+------------+------+---------+------+---------+---------+
 	| 0 |   OPCODE   |  Ia  |    A    |  Ib  |    B    |    C    |
 	+---+------------+------+---------+------+---------+---------+
