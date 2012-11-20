@@ -116,7 +116,7 @@ Every OpCode has a fixed length of 5 bit.
 	0x00	NOP		No Operation.
 	0x01	LD  a b	c	Load [a] to (b).
 	0x02	STR a b	c	Stores (a) to [b].
-	0x03	CP  a b	c	Copy (a) to (b).
+	0x03	CPY a b	c	Copy (a) to (b).
 	0x04	SET a b		Set bit b in (a).
 	0x05	RST a b		Reset bit b in (a).
 	0x06	PSH a		Push (a) onto the stack.
