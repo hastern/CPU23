@@ -55,7 +55,11 @@ Constants
 The optional constant in a command word is enclosed in parenthesis.
 
 
+Values
+------
 
+Values can be placed directly between the instructions.
+Every value starts with the character #.
 
 
 

@@ -47,7 +47,29 @@ char * opCodeToString(OpCode o) {
 		case 0x19: return "DSP";
 		case 0x1A: return "EMW";
 		case 0x1B: return "EMR";
-		default: return "ERR";
+		default: return NULL;
+	}
+}
+
+char * registerToString(RegSel r) {
+	switch(r & 0xF) {
+		case 0x0: return "R0";
+		case 0x1: return "R1";
+		case 0x2: return "R2";
+		case 0x3: return "R3";
+		case 0x4: return "R4";
+		case 0x5: return "R5";
+		case 0x6: return "R6";
+		case 0x7: return "R7";
+		case 0x8: return "R8";
+		case 0x9: return "R9";
+		case 0xA: return "RX";
+		case 0xB: return "IR";
+		case 0xC: return "SR";
+		case 0xD: return "SP";
+		case 0xE: return "DP";
+		case 0xF: return "PC";
+		default: return NULL;
 	}
 }
  
@@ -113,12 +135,13 @@ int addToHexFile(HexFile * hexfile, Instruction cmd) {
 	}
 }
 
-int parseOpCode(char * line, OpCode * op) {
+int parseOpCode(char ** line, OpCode * op) {
 	int i = 0;
 	char cmd[4] = {0};
-	for (i = 0; *line != ' ' && i < 3; (*line)++){
-		cmd[i++] = *line;
+	for (i = 0; **line != ' ' && i < 3; (*line)++){
+		cmd[i++] = **line;
 	}
+	line += i;
 	for (i = 0; i < 0x1F; i++) {
 		if (strcmp(cmd, opCodeToString(i))==0) {
 			*op = (OpCode)i;
@@ -129,10 +152,54 @@ int parseOpCode(char * line, OpCode * op) {
 	
 }
 
-int parseRegisterSelect(char * line, RegisterSelect * reg) {
+int charToRegSel(char * c, RegSel * r){
+	int i;
+	for(i = 0; i < 16; i++){
+		if (strcmp(c, registerToString(i))==0) {
+			*r = (RegSel) i;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int parseRegisterSelect(char ** line, RegisterSelect * reg) {
+	char r[4] = {0};
+	int chars = 0, disp;
 	reg->disp = NoDisplacement;
 	reg->reg =  RX;
 	
+	if (sscanf(*line, "[%c%c]%n", &(r[0]), &(r[1]), &chars) == 2) {
+		r[2] = '\0';
+		charToRegSel(&(r[0]), &(reg->reg) );
+		reg->disp = WithDisplacement;
+	} else if (sscanf(*line, "[%c%c,%d]%n", &(r[0]), &(r[1]), &disp, &chars) == 3) {
+		r[2] = '\0';
+		charToRegSel(&(r[0]), &(reg->reg) );
+		reg->disp = WithDisplacement;
+	} else if (sscanf(*line, "[%c%c%c]%n", &(r[0]), &(r[1]), &(r[2]), &chars) == 3) {
+		if (r[0] == '+' || r[0] == '-'){
+			r[3] = '\0';
+			charToRegSel(&(r[1]), &(reg->reg) );
+			if (r[0] == '+')
+				reg->disp = PreIncrement;
+			else if (r[0] == '-')
+				reg->disp = PreDecrement;
+		} else if (r[2] == '+' || r[2] == '-'){
+			if (r[0] == '+')
+				reg->disp = PostIncrement;
+			else if (r[0] == '-')
+				reg->disp = PostDecrement;
+			r[2] = '\0';
+			charToRegSel(&(r[0]), &(reg->reg) );
+			
+		}
+	} else if (sscanf(*line, "%c%c%n", &(r[0]), &(r[1]), &chars) == 3) {
+		r[2] = '\0';
+		charToRegSel(&(r[0]), &(reg->reg) );
+	}
+	
+	line += chars;
 	return 1;
 }
 
@@ -165,7 +232,7 @@ int parseLine(char * line, Instruction * cmd) {
 			sscanf(line, "#%i", &val);
 			*cmd = val & 0x7FFFFF;
 		} else{
-			if (parseOpCode(line, &op) && parseRegisterSelect(line, &rA) && parseRegisterSelect(line, &rB) && parseConstant(&(line[0]), &cnst))
+			if (parseOpCode(&line, &op) && parseRegisterSelect(&line, &rA) && parseRegisterSelect(&line, &rB) && parseConstant(line, &cnst))
 				*cmd = buildInstruction(op, rA, rB, cnst);
 			else 
 				cmd = NULL;

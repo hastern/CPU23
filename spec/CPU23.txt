@@ -31,8 +31,7 @@
 	* programm memory (PM)
 	* stack memory (SM)
 - Up to 2^23 WORDS of external Memory (EM) 
-	* Blockwise access 
-	* R/W up to 31 words at a time
+	* Blockwise R/W access
 - Integrated text display driver
 	* ASCII compatible
 	* Fixed size 80x30 character display with buffer memory (DM)
@@ -64,7 +63,7 @@ Each instruction is composed by to operand selectors (a, b) and an opcode.
 Additionally there can be a constant value (c).
 Each operand selection can have a post de-/increment or an 6 bit index.
 
-	 23  22        18 17  16 15     12 11  10 09     06 05     00
+	 23  22        18 17  15 14     11 10  08 07     03 02     00
 	+---+------------+------+---------+------+---------+---------+
 	| 0 |   OPCODE   |  Ia  |    A    |  Ib  |    B    |    C    |
 	+---+------------+------+---------+------+---------+---------+
@@ -114,9 +113,9 @@ Every OpCode has a fixed length of 5 bit.
 	Value	Name		Description
 	-----	----		-----------
 	0x00	NOP		No Operation.
-	0x01	LD  a b	c	Load [a] to (b).
-	0x02	STR a b	c	Stores (a) to [b].
-	0x03	CPY a b	c	Copy (a) to (b).
+	0x01	LD  a b		Load [a] to (b).
+	0x02	STR a b		Stores (a) to [b].
+	0x03	CPY a b		Copy (a) to (b).
 	0x04	SET a b		Set bit b in (a).
 	0x05	RST a b		Reset bit b in (a).
 	0x06	PSH a		Push (a) onto the stack.
@@ -125,19 +124,19 @@ Every OpCode has a fixed length of 5 bit.
 				This operation increments the stack pointer.
 	0x08	INC a		Increments (a).
 	0x09	DEC a		Decrements (a).
-	0x0A	ADD a b	c	Sets (a) to (a) + (b). 
-	0x0B	SUB a b	c	Sets (a) to (a) - (b). 
-	0x0C	LSL a b	c	Sets (a) to (a) << b (logical shift).
-	0x0D	LSR a b	c	Sets (a) to (a) >> b (logical shift).
-	0x0E	AND a b	c	Sets (a) to (a) & (b).
-	0x0F	OR  a b	c	Sets (a) to (a) | (b).
-	0x10	XOR a b	c	Sets (a) to (a) ^ (b).
-	0x11	NOT a	c	Inverts (a).
-	0x12	CMP a b	c	Compares (a) and (b) and set the flags in SR.
+	0x0A	ADD a b		Sets (a) to (a) + (b). 
+	0x0B	SUB a b		Sets (a) to (a) - (b). 
+	0x0C	LSL a b		Sets (a) to (a) << b (logical shift).
+	0x0D	LSR a b		Sets (a) to (a) >> b (logical shift).
+	0x0E	AND a b		Sets (a) to (a) & (b).
+	0x0F	OR  a b		Sets (a) to (a) | (b).
+	0x10	XOR a b		Sets (a) to (a) ^ (b).
+	0x11	NOT a		Inverts (a).
+	0x12	CMP a b		Compares (a) and (b) and set the flags in SR.
 	0x13	TST a		Sets the Z-Flag or the N-Flag in SR, 
 				based on (a).
-	0x14	JMP a b	c	Unconditional jump to (a) with offset b.
-	0x15	BRA a b	c	Branch to (b), if Flag b is set in SR.
+	0x14	JMP a b		Unconditional jump to (a) with offset b.
+	0x15	BRA a b		Branch to (b), if Flag a is set in SR.
 	0x16	CLL a		Call subroutine (a).
 	0x17	BRS a b		Branch subroutine (b), if Flag a is set in SR.
 				Pushes the current PC to the stack.
@@ -145,8 +144,8 @@ Every OpCode has a fixed length of 5 bit.
 				Pops the PC from the stack.
 	0x19	DSP a b		Write [a] at position defined by [b]. 
 				Increment DP afterwards.
-	0x1A	EMW a b c	Write c words starting at [a] to block [b] on MD.
-	0x1B	EMR a b c	Read c words from block [b] to [a] and following.
+	0x1A	EMW a b 	Write word [a] to block [b] on MD.
+	0x1B	EMR a b		Read word from block [b] to [a].
 	0x1C	
 	0x1D	
 	0x1E	
