@@ -10,9 +10,6 @@
 
 /** OpCode definition */
 enum e_OpCode {
-	CONSTANT = -3,
-	COMMENT = -2,
-	ERROR = -1,
 	NOP = 0x00, LD  = 0x01, STR = 0x02, CPY = 0x03,
 	SET = 0x04, RST = 0x05, PSH = 0x06, POP = 0x07,
 	INC = 0x08, DEC = 0x09, ADD = 0x0A, SUB = 0x0B,
@@ -50,6 +47,7 @@ typedef enum e_Displacement Displacement;
 
 typedef uint32_t Word;
 typedef uint8_t Constant;
+typedef uint32_t BinInstr;
 
 /** Registerselection and displacement */
 struct s_RegisterSelect {
@@ -60,12 +58,12 @@ struct s_RegisterSelect {
 typedef struct s_RegisterSelect RegisterSelect;
 
 struct s_Instruction {
-    Constant C:6;
+    Constant C:4;
     RegSel B:4;
     Displacement Ib:3;
     RegSel A:4;
     Displacement Ia:3;
-    OpCode opcode:6;
+    OpCode opcode:5;
     uint8_t reserved:1;
 };
 typedef struct s_Instruction Instruction;
@@ -95,13 +93,19 @@ Instruction buildInstruction(	OpCode op,
 			RegisterSelect regB, 
 			Constant c
 			);
+BinInstr buildBinInstruction(	OpCode op, 
+			RegisterSelect regA, 
+			RegisterSelect regB, 
+			Constant c
+			);
 
 HexFile * newHexFile();
 void freeHexFile(HexFile * hexfile);
 int saveHexFile(HexFile * hexfile, char * fname);
 
 
-int addToHexFile(HexFile * hexfile, Instruction cmd);
+int addInstrToHexFile(HexFile * hexfile, Instruction cmd);
+int addBinInstrToHexFile(HexFile * hexfile, BinInstr cmd);
 
 int parseFile(char * fname, HexFile * hexfile);
 

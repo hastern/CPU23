@@ -83,30 +83,30 @@ InstructionWord fromInt(int cmd) {
 
  
 Instruction buildInstruction(OpCode op, RegisterSelect regA, RegisterSelect regB, Constant c) {
-    Instruction instr;
-    instr.C = c;
-    instr.B = regB.reg;
-    instr.Ib = regB.disp;
-    instr.A = regA.reg;
-    instr.Ia = regA.disp;
-    instr.opcode = op;
-    instr.reserved = 0;
-
-//	if (op == CONSTANT) {
-//		return c & 0x7FFFFF;
-//	} else if ( op >= 0) {
-//		return (1 << 23)
-//			| (op << 18)
-//			| (regA.disp << 16)
-//			| (regA.reg  << 12)
-//			| (regB.disp << 10)
-//			| (regB.reg  << 6)
-//			| (c << 0)
-//		;
-//	} else {
-//		return (1 << 23) | (NOP << 18);
-//	}
-    return instr;
+	Instruction instr;
+	instr.C = c;
+	instr.B = regB.reg;
+	instr.Ib = regB.disp;
+	instr.A = regA.reg;
+	instr.Ia = regA.disp;
+	instr.opcode = op;
+	instr.reserved = 0;
+	return instr;
+}
+	
+BinInstr buildBinInstr(OpCode op, RegisterSelect regA, RegisterSelect regB, Constant c) {
+	if ( op >= 0) {
+		return (1 << 23)
+			| (op << 18)
+			| (regA.disp << 15)
+			| (regA.reg  << 11)
+			| (regB.disp << 8)
+			| (regB.reg  << 4)
+			| (c << 0)
+		;
+	} else {
+		return (1 << 23) | (NOP << 18);
+	}
 }
 
 HexFile * newHexFile() {
@@ -126,7 +126,7 @@ void freeHexFile(HexFile * hexfile) {
 	}
 }
 
-int addToHexFile(HexFile * hexfile, Instruction cmd) {
+int addBinInstrToHexFile(HexFile * hexfile, BinInstr cmd) {
 	assert(hexfile != NULL);
 	{
 		if (hexfile->chunks == 0) {
@@ -135,7 +135,7 @@ int addToHexFile(HexFile * hexfile, Instruction cmd) {
 		}
 		if (hexfile->instructions != NULL) {
 			printf("\t->0x%.6X\n", *(uint32_t*)&cmd);
-			hexfile->instructions[((hexfile->len)++)] = *(InstructionWord*)&cmd;
+			hexfile->instructions[((hexfile->len)++)] = fromInt(cmd);
 			hexfile->chunks--;
 			return 0;
 		} else {
@@ -152,13 +152,13 @@ int parseOpCode(char ** line, OpCode * op) {
 		cmd[i++] = **line;
 	}
 	line += i;
-	for (i = 0; i < 0x1F; i++) {
+	for (i = 0; i <= 0x1F; i++) {
 		if (strcmp(cmd, opCodeToString(i))==0) {
 			*op = (OpCode)i;
 			break;
 		}
 	}
-	return (*op != ERROR);
+	return (i < 0x1F);
 	
 }
 
@@ -220,7 +220,7 @@ int parseConstant(char * line, Constant * cnst) {
 	return 1;
 }
 
-int parseLine(char * line, Instruction * cmd) {
+int parseLine(char * line, BinInstr * cmd) {
 	assert(line != NULL);
 	{
 		OpCode 
@@ -237,16 +237,12 @@ int parseLine(char * line, Instruction * cmd) {
 		/* Constant */
 		printf("\tline: %s\n", line);
 		if (*line == '#') {
-            RegisterSelect empty;
-            empty.reg = 0;
-            empty.disp = 0;
 			int val = 0;
-			op = CONSTANT;
 			sscanf(line, "#%i", &val);
-            *cmd = buildInstruction(op, empty, empty, val);
+			*cmd = val & 0x7FFFFF;
 		} else{
 			if (parseOpCode(&line, &op) && parseRegisterSelect(&line, &rA) && parseRegisterSelect(&line, &rB) && parseConstant(line, &cnst))
-				*cmd = buildInstruction(op, rA, rB, cnst);
+				*cmd = buildBinInstr(op, rA, rB, cnst);
 			else 
 				cmd = NULL;
 		}
@@ -264,10 +260,10 @@ int parseFile(char * fname, HexFile * hexfile) {
 		while (!feof(fHnd) && !err) {
 			*buf_p = fgetc(fHnd);
 			if (*buf_p == '\n') {
-				Instruction c;
+				BinInstr c;
 				*buf_p = '\0';
 				if (parseLine(&(buf[0]), &c))
-					err = addToHexFile(hexfile, c);
+					err = addBinInstrToHexFile(hexfile, c);
 				buf_p = &(buf[0]);
 			} else {
 				buf_p++;
