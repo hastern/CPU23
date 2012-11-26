@@ -36,9 +36,10 @@
 	* ASCII compatible
 	* Fixed size 80x30 character display with buffer memory (DM)
 The document will use the following short hand forms:
-	 a  - Just the value a.
-	(a) - The value of register a.
-	[a] - The value at the address from register a.
+	 x  - Just the value x.
+	(x) - The value of register x.
+	[x] - The value at the address from register x.
+	{x} - Can be either (x) or [x].
 
 
 # === STATUS REGISTER ==========================================================
@@ -59,26 +60,28 @@ The document will use the following short hand forms:
 
 # === INSTRUCTION SET ==========================================================
 
-Each instruction is composed by to operand selectors (a, b) and an opcode.
+Each instruction is composed by two operand selectors (a, b) and an opcode.
 Additionally there can be a constant value (c).
-Each operand selection can have a post de-/increment or an 6 bit index.
+Each operand selection can have a post de-/increment or an 4 bit index.
 
 	 23  22        18 17  15 14     11 10  08 07     04 03     00
 	+---+------------+------+---------+------+---------+---------+
 	| 0 |   OPCODE   |  Ia  |    A    |  Ib  |    B    |    C    |
 	+---+------------+------+---------+------+---------+---------+
 	
-The index Ix can have 7 different values.
+Operand A is always the result register.
+	
+The index Ix can have 8 different values.
 
 	Value	Description
 	-----	-----------
-	0x00	No Indexing: (x)
-	0x01	Index by `C`: [x+C]
-	0x02	Post-Increment (x)
-	0x03	Post-Decrement (x)
-	0x04	Pre-Increment (x)
-	0x05	Pre-Decrement (x)
-	0x08	
+	0x00	Direct access: (x)
+	0x01	Indirect access: [x]
+	0x02	Indirect access with displacement: [x,c]
+	0x03	Indirect access with post-Increment [x+]
+	0x04	Indirect access with post-Decrement [x-]
+	0x05	Indirect access with pre-Increment [+x]
+	0x06	Indirect access with pre-Decrement [-x]
 	0x07	Treat B and C as one big constant (Ib only).
 
 	
@@ -88,19 +91,19 @@ The 16 processor registers can be selected by a 4 bit value.
 
 	Value	Short	Description
 	-----	-----	-----------
-	0x00	R0	Data register 0
-	0x01	R1	Data register 1
-	0x02	R2	Data register 2
-	0x03	R3	Data register 3
-	0x04	R4	Data register 4
-	0x05	R5	Data register 5
-	0x06	R6	Data register 6
-	0x07	R7	Data register 7
-	0x08	R8	Data register 8
-	0x09	R9	Data register 9
+	0x00	R0	General purpose register 0
+	0x01	R1	General purpose register 1
+	0x02	R2	General purpose register 2
+	0x03	R3	General purpose register 3
+	0x04	R4	General purpose register 4
+	0x05	R5	General purpose register 5
+	0x06	R6	General purpose register 6
+	0x07	R7	General purpose register 7
+	0x08	R8	General purpose register 8
+	0x09	R9	General purpose register 9
 	0x0A	RX	Extend register
-	0x0B	IH	Interrupt handler
-	0x0C	SR	Status register
+	0x0B	SR	Status register
+	0x0C	IH	Interrupt handler
 	0x0D	SP	Stack pointer
 	0x0E	DP	Display pointer
 	0x0F	PC	Programm counter
@@ -113,39 +116,37 @@ Every OpCode has a fixed length of 5 bit.
 	Value	Name		Description
 	-----	----		-----------
 	0x00	NOP		No Operation.
-	0x01	LD  a b		Load [a] to (b).
-	0x02	STR a b		Stores (a) to [b].
-	0x03	CPY a b		Copy (a) to (b).
-	0x04	SET a b		Set bit b in (a).
-	0x05	RST a b		Reset bit b in (a).
-	0x06	PSH a		Push (a) onto the stack.
-				This operation decrements the stack pointer.
-	0x07	POP a		Pop last stack entry to (a).
-				This operation increments the stack pointer.
-	0x08	INC a		Increments (a).
-	0x09	DEC a		Decrements (a).
-	0x0A	ADD a b		Sets (a) to (a) + (b). 
-	0x0B	SUB a b		Sets (a) to (a) - (b). 
-	0x0C	LSL a b		Sets (a) to (a) << b (logical shift).
-	0x0D	LSR a b		Sets (a) to (a) >> b (logical shift).
-	0x0E	AND a b		Sets (a) to (a) & (b).
-	0x0F	OR  a b		Sets (a) to (a) | (b).
-	0x10	XOR a b		Sets (a) to (a) ^ (b).
-	0x11	NOT a		Inverts (a).
-	0x12	CMP a b		Compares (a) and (b) and set the flags in SR.
-	0x13	TST a		Sets the Z-Flag or the N-Flag in SR, 
-				based on (a).
-	0x14	JMP a b		Unconditional jump to (a) with offset b.
-	0x15	BRA a b		Branch to (b), if Flag a is set in SR.
-	0x16	CLL a		Call subroutine (a).
-	0x17	BRS a b		Branch subroutine (b), if Flag a is set in SR.
+	0x01	CPY a b		Load/Store {a} to {b}.
+	0x02	SET a b		Set bit b in {a}.
+	0x03	RST a b		Reset bit b in {a}.
+	0x04	ADD a b		Sets {a} to {a} + {b}. 
+	0x05	SUB a b		Sets {a} to {a} - {b}. 
+	0x06	LSL a   c	Sets {a} to {a} << b+c (logical shift).
+				Implicite Ib = 0x7
+	0x07	LSR a   c	Sets {a} to {a} >> b+c (logical shift).
+				Implicite Ib = 0x7
+	0x08	AND a b		Sets {a} to {a} & {b}.
+	0x09	OR  a b		Sets {a} to {a} | {b}.
+	0x0A	XOR a b		Sets {a} to {a} ^ {b}.
+	0x0B	NOT a		Inverts {a}.
+	0x0C	CMP a b		Compares {a} and {b} and set the flags in SR.
+	0x0D	JMP a		Unconditional jump to {a}.
+	0x0E	BRA a b		Branch to {a}, if Flag b is set in SR.
+	0x0F	CLL a		Call subroutine {a}.
+	0x10	BRS a b		Branch subroutine {a}, if Flag b is set in SR.
 				Pushes the current PC to the stack.
-	0x18	RTS		Return from subroutine. 
+	0x11	RTS		Return from subroutine. 
 				Pops the PC from the stack.
-	0x19	DSP a b		Write [a] at position defined by [b]. 
-				Increment DP afterwards.
-	0x1A	EMW a b 	Write word [a] to block [b] on MD.
-	0x1B	EMR a b		Read word from block [b] to [a].
+	0x12	EMW a b		Write word [b] to block [a] on MD.
+	0x13	EMR a b		Read word from block [b] to [a].
+	0x14	
+	0x15	
+	0x16	
+	0x17	
+	0x18	
+	0x19	
+	0x1A	
+	0x1B	
 	0x1C	
 	0x1D	
 	0x1E	
@@ -157,26 +158,28 @@ Every OpCode has a fixed length of 5 bit.
 The memory is organised in four main blocks.
 
 1. Block: Basic operating system, hardware addresses and interrupt handler
-2. Block: Mixed programm an data memory
+2. Block: Mixed (user) programm an data memory
 3. Block: Stack
 4. Block: Display memory
 
 	+--------------------+ 0x000000
 	|                    |
-	|      BasOpSys      |
+	|      Basic OS      |
 	|                    |
 	+--------------------+ 0x0003FF
-	|       Memory       |
+	|                    |
+	|        Memory      |
 	|      _ _ _ _ _     |
-	|     v v v v v v    |
+	.     v v v v v v    .
 	.                    .
 	.                    .
 	+--------------------+ (SP)
 	.                    .
 	.                    .
-	|     ^_^_^_^_^_^    |
+	.     ^_^_^_^_^_^    .
 	|                    |
 	|        Stack       |
+	|                    |
 	+--------------------+ 0x7FF600
 	|                    |
 	|   Display Memory   |
@@ -200,13 +203,13 @@ Every character has a dimension of 8x16 resulting in a display size of 80x30
 characters.
 
 One WORD of display memory is split in four parts. The leftmost 7-bits define 
-the character. The next 12-bits define the color, split up in 4-bit values for 
-red, green and blue.
+the character. The next 14-bits define the back- and foregroundcolor, split up 
+in two 7-bit values.
 
-	 23  22   20 19   16 15   12 11   08 07       00
-	+---+-------+-------+-------+-------+-----------+
-	| 0 |       | BLUE  | GREEN |  RED  | CHARACTER |
-	+---+-------+-------+-------+-------+-----------+
+	 23  22  21           17 14           08 07       00
+	+---+---+---------------+---------------+-----------+
+	| 0 |   |  FOREGROUND   |  BACKGROUND   | CHARACTER |
+	+---+---+---------------+---------------+-----------+
 
 
 # --- CHARACTER SET ------------------------------------------------------------
@@ -215,29 +218,42 @@ The character set is ASCII compatible.
 
 	   | …0  …1  …2  …3  …4  …5  …6  …7  …8  …9  …A  …B  …C  …D  …E  …F
 	---+---------------------------------------------------------------
-	0… |                                                               
-	1… |                                                               
+	0… |                         not used
+	1… |                         not used
 	2… | SP  !   "	 #   $   %   &   '   (   )   *   +   ,   -   .   / 
 	3… | 0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ? 
 	4… | @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O 
 	5… | P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _ 
 	6… | `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o 
-	7… | p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~     
+	7… | p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~  DEL
 
 
 
 # --- COLORS -------------------------------------------------------------------
 
-The color has a depth of 12-bits for the three colors red, green and blue.
+The color has a depth of 7-bits for the three colors red, green and blue.
+The BRIGHT-bit is used as global third bit for every color part.
+
+	 6      5        4 3     2 1     0
+	+--------+--------+-------+-------+
+	| BRIGHT |  BLUE  | GREEN |  RED  |
+	+--------+--------+-------+-------+
+
 As the VGA-Signal have 10-Bit per channel, the seperate colors get expand by 
-stretching the 4-bit to 8-bit values. Afterwards the are shifted by two, since 
-the lower values can hardly be separated. A value of 0xF gets expanded to 0x3FC.
-
-Colors can be displayed by #BGR constants.
+stretching the 2-bit to 8-bit values and get shifted afterwards by 2.
 
 
 
-
+	BRIGHT	Value	Stretched
+	------	-----	---------
+	0	0x0	0x0 = 0
+	0	0x1	0x1 = 32
+	0	0x2	0x2 = 64
+	0	0x3	0x3 = 96
+	1	0x0	0x4 = 128
+	1	0x1	0x5 = 160
+	1	0x2	0x6 = 192
+	1	0x3	0x7 = 224
 
 
    ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
