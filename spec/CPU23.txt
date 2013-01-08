@@ -45,9 +45,9 @@ The document will use the following short hand forms:
 # === STATUS REGISTER ==========================================================
 
 	 23  22  21  20  19  18  17  16
-	+---+---+---+---+---+---+---+---+--- ... ---+
-	| 1 | G | L | E | N | Z | C | V |           |
-	+---+---+---+---+---+---+---+---+--- ... ---+
+	+---+---+---+---+---+---+---+---+---+---+--- ... ---+
+	| 1 | G | L | E | N | Z | C | V | S | I |           |
+	+---+---+---+---+---+---+---+---+---+---+--- ... ---+
 
 - G: Greater
 - L: Less
@@ -56,6 +56,8 @@ The document will use the following short hand forms:
 - Z: Zero
 - C: Carry
 - V: Overflow
+- S: Strict mode
+- I: Interrupt enabled
 	
 
 # === INSTRUCTION SET ==========================================================
@@ -113,6 +115,7 @@ The 16 processor registers can be selected by a 4 bit value.
 
 Every OpCode has a fixed length of 5 bit. 
 
+
 	Value	Name		Description
 	-----	----		-----------
 	0x00	NOP		No Operation.
@@ -131,9 +134,11 @@ Every OpCode has a fixed length of 5 bit.
 	0x0B	NOT a		Inverts {a}.
 	0x0C	CMP a b		Compares {a} and {b} and set the flags in SR.
 	0x0D	JMP a		Unconditional jump to {a}.
-	0x0E	BRA a b		Branch to {a}, if Flag b is set in SR.
+	0x0E	BRA a b		Mask SR using (b) and branch to {a}, 
+				if not null.
 	0x0F	CLL a		Call subroutine {a}.
-	0x10	BRS a b		Branch subroutine {a}, if Flag b is set in SR.
+	0x10	BRS a b		Mask SR using (b) and branch to subroutine {a}, 
+				if not null.
 				Pushes the current PC to the stack.
 	0x11	RTS		Return from subroutine. 
 				Pops the PC from the stack.
@@ -204,12 +209,12 @@ characters.
 
 One WORD of display memory is split in four parts. The leftmost 7-bits define 
 the character. The next 14-bits define the back- and foregroundcolor, split up 
-in two 7-bit values.
+in two 8-bit values.
 
-	 23  22  21           17 14           08 07       00
-	+---+---+---------------+---------------+-----------+
-	| 0 |   |  FOREGROUND   |  BACKGROUND   | CHARACTER |
-	+---+---+---------------+---------------+-----------+
+	 23  22           17 14           07 06       00
+	+---+---------------+---------------+-----------+
+	| 0 |  FOREGROUND   |  BACKGROUND   | CHARACTER |
+	+---+---------------+---------------+-----------+
 
 
 # --- CHARACTER SET ------------------------------------------------------------
@@ -231,29 +236,31 @@ The character set is ASCII compatible.
 
 # --- COLORS -------------------------------------------------------------------
 
-The color has a depth of 7-bits for the three colors red, green and blue.
-The BRIGHT-bit is used as global third bit for every color part.
+Colors are displayed using a 8-8-4 palette. Thus there are 8 different values 
+for red and green and 4 different values for blue.
 
-	 6      5        4 3     2 1     0
-	+--------+--------+-------+-------+
-	| BRIGHT |  BLUE  | GREEN |  RED  |
-	+--------+--------+-------+-------+
+The Colors are arranged as follows:
 
-As the VGA-Signal have 10-Bit per channel, the seperate colors get expand by 
-stretching the 2-bit to 8-bit values and get shifted afterwards by 2.
+	 7    6 5     3 2     0
+	+------+-------+-------+
+	| BLUE | GREEN |  RED  |
+	+------+-------+-------+
 
+The values get translated into 24-Bit RGB values using the following conversion
+tables
 
+	2-Bit 	8-Bit		3-Bit	8-Bit
+	-----	-----		-----	-----
+	0x00	0x00		0x00	0x00
+	0x01	0x55		0x01	0x24
+	0x02	0xAA		0x02	0x48
+	0x03	0xFF		0x03	0x6D
+				0x04	0x91
+				0x05	0xB6
+				0x06	0xDA
+				0x07	0xFF
 
-	BRIGHT	Value	Stretched
-	------	-----	---------
-	0	0x0	0x0 = 0
-	0	0x1	0x1 = 32
-	0	0x2	0x2 = 64
-	0	0x3	0x3 = 96
-	1	0x0	0x4 = 128
-	1	0x1	0x5 = 160
-	1	0x2	0x6 = 192
-	1	0x3	0x7 = 224
-
+	
+	
 
    ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
