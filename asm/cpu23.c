@@ -16,37 +16,28 @@
 #define BUFFERSIZE 80
 #define CHUNKSIZE 10
 
-
 char * opCodeToString(OpCode o) {
 	switch (o) {
 		case 0x00: return "NOP";
-		case 0x01: return "LD";
-		case 0x02: return "STR";
-		case 0x03: return "CPY";
-		case 0x04: return "SET";
-		case 0x05: return "RST";
-		case 0x06: return "PSH";
-		case 0x07: return "POP";
-		case 0x08: return "INC";
-		case 0x09: return "DEC";
-		case 0x0A: return "ADD";
-		case 0x0B: return "SUB";
-		case 0x0C: return "LSL";
-		case 0x0D: return "LSR";
-		case 0x0E: return "AND";
-		case 0x0F: return "OR";
-		case 0x10: return "XOR";
-		case 0x11: return "NOT";
-		case 0x12: return "CMP";
-		case 0x13: return "TST";
-		case 0x14: return "JMP";
-		case 0x15: return "BRA";
-		case 0x16: return "CLL";
-		case 0x17: return "BRS";
-		case 0x18: return "RTS";
-		case 0x19: return "DSP";
-		case 0x1A: return "EMW";
-		case 0x1B: return "EMR";
+		case 0x01: return "RLS";
+		case 0x02: return "SET";
+		case 0x03: return "RST";
+		case 0x04: return "ADD";
+		case 0x05: return "SUB";
+		case 0x06: return "LSL";
+		case 0x07: return "LSR";
+		case 0x08: return "AND";
+		case 0x09: return "OR";
+		case 0x0A: return "XOR";
+		case 0x0B: return "NOT";
+		case 0x0C: return "CMP";
+		case 0x0D: return "JMP";
+		case 0x0E: return "BRA";
+		case 0x0F: return "CLL";
+		case 0x10: return "BRS";
+		case 0x11: return "RTS";
+		case 0x12: return "EMW";
+		case 0x13: return "EMR";
 		default: return NULL;
 	}
 }
@@ -73,42 +64,19 @@ char * registerToString(RegSel r) {
 	}
 }
  
-InstructionWord fromInt(int cmd) {
-	InstructionWord w;
-	w.data[0] = cmd & 0xFF;
-	w.data[1] = (cmd >> 8) & 0xFF;
-	w.data[2] = (cmd >> 16) & 0xFF;
-	return w;
-}
 
- 
 Instruction buildInstruction(OpCode op, RegisterSelect regA, RegisterSelect regB, Constant c) {
 	Instruction instr;
-	instr.C = c;
-	instr.B = regB.reg;
-	instr.Ib = regB.disp;
-	instr.A = regA.reg;
-	instr.Ia = regA.disp;
-	instr.opcode = op;
-	instr.reserved = 0;
+	instr.parts.C = c;
+	instr.parts.B = regB.reg;
+	instr.parts.Ib = regB.disp;
+	instr.parts.A = regA.reg;
+	instr.parts.Ia = regA.disp;
+	instr.parts.opcode = op;
+	instr.parts.nonExec = 0;
 	return instr;
 }
 	
-BinInstr buildBinInstr(OpCode op, RegisterSelect regA, RegisterSelect regB, Constant c) {
-	if ( op >= 0) {
-		return (1 << 23)
-			| (op << 18)
-			| (regA.disp << 15)
-			| (regA.reg  << 11)
-			| (regB.disp << 8)
-			| (regB.reg  << 4)
-			| (c << 0)
-		;
-	} else {
-		return (1 << 23) | (NOP << 18);
-	}
-}
-
 HexFile * newHexFile() {
 	HexFile * hexfile = malloc(sizeof(HexFile));
 	hexfile->len = 0;
@@ -117,25 +85,26 @@ HexFile * newHexFile() {
 	return hexfile;
 }
 
-void freeHexFile(HexFile * hexfile) {
-	assert(hexfile != NULL);
+HexFile * freeHexFile(HexFile * hexfile) {
+	if(hexfile != NULL)
 	{
 		if (hexfile->instructions != NULL)
 			free(hexfile->instructions);
 		free(hexfile);
 	}
+	return hexfile;
 }
 
-int addBinInstrToHexFile(HexFile * hexfile, BinInstr cmd) {
+int addInstrToHexFile(HexFile * hexfile, Instruction cmd) {
 	assert(hexfile != NULL);
 	{
 		if (hexfile->chunks == 0) {
-			hexfile->instructions = realloc(hexfile->instructions, sizeof(InstructionWord)*((hexfile->len)+CHUNKSIZE));
+			hexfile->instructions = realloc(hexfile->instructions, sizeof(Instruction)*((hexfile->len)+CHUNKSIZE));
 			hexfile->chunks = CHUNKSIZE;	
 		}
 		if (hexfile->instructions != NULL) {
-			printf("\t->0x%.6X\n", *(uint32_t*)&cmd);
-			hexfile->instructions[((hexfile->len)++)] = fromInt(cmd);
+			printf("\t-> 0x%.6X\n", cmd.word);
+			hexfile->instructions[((hexfile->len)++)] = cmd;
 			hexfile->chunks--;
 			return 0;
 		} else {
@@ -153,19 +122,21 @@ int parseOpCode(char ** line, OpCode * op) {
 	}
 	line += i;
 	for (i = 0; i <= 0x1F; i++) {
-		if (strcmp(cmd, opCodeToString(i))==0) {
-			*op = (OpCode)i;
-			break;
+		char * opLine = opCodeToString(i);
+		if ((opLine != NULL) && (strcmp(cmd, opLine)==0)) {
+			*op = (OpCode) i;
+			return 1;
 		}
 	}
-	return (i < 0x1F);
+	return 0;
 	
 }
 
-int charToRegSel(char * c, RegSel * r){
+int charToRegSel(char * c, RegSel * r) {
 	int i;
-	for(i = 0; i < 16; i++){
-		if (strcmp(c, registerToString(i))==0) {
+	for(i = 0; i < 16; i++) {
+		char * regLine = registerToString(i);
+		if ((regLine != NULL) && (strcmp(c, regLine)==0)) {
 			*r = (RegSel) i;
 			return 1;
 		}
@@ -179,16 +150,16 @@ int parseRegisterSelect(char ** line, RegisterSelect * reg) {
 	reg->disp = NoDisplacement;
 	reg->reg =  RX;
 	
-	if (sscanf(*line, "[%c%c]%n", &(r[0]), &(r[1]), &chars) == 2) {
+	if (sscanf(*line, "[%c%c]%n", &(r[0]), &(r[1]), &chars) >= 2) {
 		r[2] = '\0';
 		charToRegSel(&(r[0]), &(reg->reg) );
 		reg->disp = WithDisplacement;
-	} else if (sscanf(*line, "[%c%c,%d]%n", &(r[0]), &(r[1]), &disp, &chars) == 3) {
+	} else if (sscanf(*line, "[%c%c,%d]%n", &(r[0]), &(r[1]), &disp, &chars) >= 3) {
 		r[2] = '\0';
 		charToRegSel(&(r[0]), &(reg->reg) );
 		reg->disp = WithDisplacement;
-	} else if (sscanf(*line, "[%c%c%c]%n", &(r[0]), &(r[1]), &(r[2]), &chars) == 3) {
-		if (r[0] == '+' || r[0] == '-'){
+	} else if (sscanf(*line, "[%c%c%c]%n", &(r[0]), &(r[1]), &(r[2]), &chars) >= 3) {
+		if (r[0] == '+' || r[0] == '-') {
 			r[3] = '\0';
 			charToRegSel(&(r[1]), &(reg->reg) );
 			if (r[0] == '+')
@@ -204,7 +175,7 @@ int parseRegisterSelect(char ** line, RegisterSelect * reg) {
 			charToRegSel(&(r[0]), &(reg->reg) );
 			
 		}
-	} else if (sscanf(*line, "%c%c%n", &(r[0]), &(r[1]), &chars) == 3) {
+	} else if (sscanf(*line, "%c%c%n", &(r[0]), &(r[1]), &chars) >= 3) {
 		r[2] = '\0';
 		charToRegSel(&(r[0]), &(reg->reg) );
 	}
@@ -220,7 +191,7 @@ int parseConstant(char * line, Constant * cnst) {
 	return 1;
 }
 
-int parseLine(char * line, BinInstr * cmd) {
+int parseLine(char * line, Instruction * cmd) {
 	assert(line != NULL);
 	{
 		OpCode 
@@ -235,16 +206,21 @@ int parseLine(char * line, BinInstr * cmd) {
 			;
 		
 		/* Constant */
-		printf("\tline: %s\n", line);
+		printf("%s", line);
 		if (*line == '#') {
 			int val = 0;
 			sscanf(line, "#%i", &val);
-			*cmd = val & 0x7FFFFF;
-		} else{
-			if (parseOpCode(&line, &op) && parseRegisterSelect(&line, &rA) && parseRegisterSelect(&line, &rB) && parseConstant(line, &cnst))
-				*cmd = buildBinInstr(op, rA, rB, cnst);
-			else 
+			cmd->word = val & 0x7FFFFF;
+		} else {
+			if (strlen(line) > 2 && 
+				parseOpCode(&line, &op) && 
+				parseRegisterSelect(&line, &rA) && 
+				parseRegisterSelect(&line, &rB) && 
+				parseConstant(line, &cnst)) {
+				*cmd = buildInstruction(op, rA, rB, cnst);
+			} else {
 				cmd = NULL;
+			}
 		}
 		return cmd != NULL;
 	}
@@ -260,17 +236,17 @@ int parseFile(char * fname, HexFile * hexfile) {
 		while (!feof(fHnd) && !err) {
 			*buf_p = fgetc(fHnd);
 			if (*buf_p == '\n') {
-				BinInstr c;
+				Instruction c;
 				*buf_p = '\0';
 				if (parseLine(&(buf[0]), &c))
-					err = addBinInstrToHexFile(hexfile, c);
+					err = addInstrToHexFile(hexfile, c);
 				buf_p = &(buf[0]);
 			} else {
 				buf_p++;
 			}
 		}
 		fclose(fHnd);
-	}	
+	}
 	return !err;
 }
 
@@ -285,9 +261,9 @@ int saveHexFile(HexFile * hexfile, char * fname) {
 			fputc((hexfile->len >> 8) & 0xFF, fHnd);
 			fputc((hexfile->len >> 0) & 0xFF, fHnd);
 			for (i = 0; i < hexfile->len; i++) {
-				fputc(hexfile->instructions[i].data[2], fHnd);
-				fputc(hexfile->instructions[i].data[1], fHnd);
-				fputc(hexfile->instructions[i].data[0], fHnd);
+				fputc(hexfile->instructions[i].bytes[2], fHnd);
+				fputc(hexfile->instructions[i].bytes[1], fHnd);
+				fputc(hexfile->instructions[i].bytes[0], fHnd);
 			}
 			fclose(fHnd);
 			return 1;

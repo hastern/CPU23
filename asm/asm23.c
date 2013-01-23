@@ -9,8 +9,8 @@
 int main(int argc, char * argv[]) {
 	int err = 0;
 	if (argc == 3) {
-		printf("ASM file:%s\n", argv[1]);
-		printf("HEX file:%s\n", argv[2]);
+		printf("ASM file: %s\n", argv[1]);
+		printf("HEX file: %s\n", argv[2]);
 		{
 			HexFile * hf = newHexFile();
 			if (hf != NULL) {
@@ -23,7 +23,7 @@ int main(int argc, char * argv[]) {
 					fprintf(stderr, "ERROR: Can't parse asm file");
 					err = 1;
 				}
-				freeHexFile(hf);
+				hf = freeHexFile(hf);
 			} else {
 				fprintf(stderr, "ERROR: Hex file is NULL");
 				err = 1;

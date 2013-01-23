@@ -3,7 +3,7 @@
 The CPU23 assembly language.
 ============================
 
-Each line contains exactly one command.
+Each line contains one command.
 
 
 OpCode
@@ -12,20 +12,11 @@ OpCode
 The language consists of 32 opcodes, defined be the CPU specifications.
 Each opcode is represented by its two or three letter representation.
 
-	NOP 
-	LD  STR 
-	CP  
-	SET RST 
-	PSH POP 
-	INC DEC 
-	ADD SUB 
-	LSL LSR 
-	AND OR  XOR NOT 
-	CMP TST 
-	JMP BRA 
-	CLL BRS RTS 
-	DSP 
-	EMW EMR
+	NOP RLS SET RST
+	ADD SUB	LSL LSR 
+	AND OR 	XOR NOT 
+	CMP JMP BRA CLL 
+	BRS RTS EMW EMR 
 
 Register selection	
 ------------------
@@ -49,17 +40,25 @@ defined by either + oder - before or after the name.
 	[R0+]	Read the value at the address stored in R0 and increment R0.
 	[-R0]	Decrement R0 and read the value at the address stored in R0.
 	
+	
 Constants
 ---------
 
 The optional constant in a command word is enclosed in parenthesis.
-
 
 Values
 ------
 
 Values can be placed directly between the instructions.
 Every value starts with the character #.
+
+Comments
+--------
+
+A comment starts with a % and ends with a new line.
+
+
+
 
 
 

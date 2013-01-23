@@ -10,13 +10,11 @@
 
 /** OpCode definition */
 enum e_OpCode {
-	NOP = 0x00, LD  = 0x01, STR = 0x02, CPY = 0x03,
-	SET = 0x04, RST = 0x05, PSH = 0x06, POP = 0x07,
-	INC = 0x08, DEC = 0x09, ADD = 0x0A, SUB = 0x0B,
-	LSL = 0x0C, LSR = 0x0D, AND = 0x0E, OR  = 0x0F,
-	XOR = 0x10, NOT = 0x11, CMP = 0x12, TST = 0x13,
-	JMP = 0x14, BRA = 0x15, CLL = 0x16, BRS = 0x17,
-	RTS = 0x18, DSP = 0x19, EMW = 0x1A, EMR = 0x1B
+	NOP = 0x00, RLS = 0x01, SET = 0x02, RST = 0x03,
+	ADD = 0x04, SUB = 0x05,	LSL = 0x06, LSR = 0x07, 
+	AND = 0x08, OR  = 0x09,	XOR = 0x0A, NOT = 0x0B, 
+	CMP = 0x0C, JMP = 0x0D, BRA = 0x0E, CLL = 0x0F, 
+	BRS = 0x10, RTS = 0x11, EMW = 0x12, EMR = 0x13
 };
 typedef enum e_OpCode OpCode;
 
@@ -45,9 +43,8 @@ enum e_Displacement {
 };
 typedef enum e_Displacement Displacement;
 
-typedef uint32_t Word;
+
 typedef uint8_t Constant;
-typedef uint32_t BinInstr;
 
 /** Registerselection and displacement */
 struct s_RegisterSelect {
@@ -57,26 +54,26 @@ struct s_RegisterSelect {
 };
 typedef struct s_RegisterSelect RegisterSelect;
 
-struct s_Instruction {
-    Constant C:4;
-    RegSel B:4;
-    Displacement Ib:3;
-    RegSel A:4;
-    Displacement Ia:3;
-    OpCode opcode:5;
-    uint8_t reserved:1;
-};
-typedef struct s_Instruction Instruction;
 
-struct s_InstructionWord {
-	uint8_t data[3];
+union u_Instruction {
+	struct {
+	    Constant C:4;
+	    RegSel B:4;
+	    Displacement Ib:3;
+	    RegSel A:4;
+	    Displacement Ia:3;
+	    OpCode opcode:5;
+	    uint8_t nonExec:1;
+	} parts;
+	uint32_t word:24;
+	uint8_t bytes[3];
 };
-typedef struct s_InstructionWord InstructionWord;
+typedef union u_Instruction Instruction;
 
 struct s_HexFile {
 	unsigned int len;
 	unsigned int chunks;
-	InstructionWord *instructions;
+	Instruction * instructions;
 };
 typedef struct s_HexFile HexFile;
 
@@ -88,24 +85,19 @@ typedef struct s_HexFile HexFile;
  * @param regB Register B
  * @param c Constant
  */
-Instruction buildInstruction(	OpCode op, 
-			RegisterSelect regA, 
-			RegisterSelect regB, 
-			Constant c
-			);
-BinInstr buildBinInstruction(	OpCode op, 
-			RegisterSelect regA, 
-			RegisterSelect regB, 
-			Constant c
-			);
+Instruction buildInstruction(	
+	OpCode op, 
+	RegisterSelect regA, 
+	RegisterSelect regB, 
+	Constant c
+);
 
 HexFile * newHexFile();
-void freeHexFile(HexFile * hexfile);
+
+HexFile * freeHexFile(HexFile * hexfile);
 int saveHexFile(HexFile * hexfile, char * fname);
 
-
 int addInstrToHexFile(HexFile * hexfile, Instruction cmd);
-int addBinInstrToHexFile(HexFile * hexfile, BinInstr cmd);
 
 int parseFile(char * fname, HexFile * hexfile);
 
