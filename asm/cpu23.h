@@ -7,6 +7,7 @@
 #define __CPU_23_H__
 
 #include <stdint.h> 
+#include <stdio.h>
 
 /** OpCode definition */
 enum e_OpCode {
@@ -34,11 +35,12 @@ typedef enum e_RegSel RegSel;
 /** Displacement */
 enum e_Displacement {
 	NoDisplacement 	= 0x00,
-	WithDisplacement= 0x01,
-	PostIncrement	= 0x02,
-	PostDecrement	= 0x03,
-	PreIncrement	= 0x04,
-	PreDecrement	= 0x05,
+	Indirect	= 0x01,
+	WithDisplacement= 0x02,
+	PostIncrement	= 0x03,
+	PostDecrement	= 0x04,
+	PreIncrement	= 0x05,
+	PreDecrement	= 0x06,
 	BigConst	= 0x07
 };
 typedef enum e_Displacement Displacement;
@@ -94,12 +96,16 @@ Instruction buildInstruction(
 
 HexFile * newHexFile();
 
-HexFile * freeHexFile(HexFile * hexfile);
-int saveHexFile(HexFile * hexfile, char * fname);
+HexFile * freeHexFile(HexFile * hf);
+int saveHexFile(HexFile * hf, char * fname);
+int loadHexFile(HexFile * hf, char * fname);
 
-int addInstrToHexFile(HexFile * hexfile, Instruction cmd);
+int addInstrToHexFile(HexFile * hf, Instruction cmd);
 
-int parseFile(char * fname, HexFile * hexfile);
+void printHexFileRegion(HexFile * hf, FILE* stream, uint32_t start, uint32_t stop);
+void printHexFile(HexFile * hf, FILE* stream);
+
+int parseFile(char * fname, HexFile * hf);
 
 
 #endif

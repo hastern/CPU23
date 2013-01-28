@@ -1,0 +1,5 @@
+RLS R0 [+PC]
+#0x0F
+RLS R1 [+PC]
+#0xF0
+ADD R0 R1

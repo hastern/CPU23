@@ -1,5 +1,5 @@
 /**
- *
+ * CPU23 Assembler
  */
 
 #include <stdio.h>

@@ -78,34 +78,34 @@ Instruction buildInstruction(OpCode op, RegisterSelect regA, RegisterSelect regB
 }
 	
 HexFile * newHexFile() {
-	HexFile * hexfile = malloc(sizeof(HexFile));
-	hexfile->len = 0;
-	hexfile->chunks = 0;
-	hexfile->instructions = NULL;
-	return hexfile;
+	HexFile * hf = malloc(sizeof(HexFile));
+	hf->len = 0;
+	hf->chunks = 0;
+	hf->instructions = NULL;
+	return hf;
 }
 
-HexFile * freeHexFile(HexFile * hexfile) {
-	if(hexfile != NULL)
+HexFile * freeHexFile(HexFile * hf) {
+	if(hf != NULL)
 	{
-		if (hexfile->instructions != NULL)
-			free(hexfile->instructions);
-		free(hexfile);
+		if (hf->instructions != NULL)
+			free(hf->instructions);
+		free(hf);
 	}
-	return hexfile;
+	return hf;
 }
 
-int addInstrToHexFile(HexFile * hexfile, Instruction cmd) {
-	assert(hexfile != NULL);
+int addInstrToHexFile(HexFile * hf, Instruction cmd) {
+	assert(hf != NULL);
 	{
-		if (hexfile->chunks == 0) {
-			hexfile->instructions = realloc(hexfile->instructions, sizeof(Instruction)*((hexfile->len)+CHUNKSIZE));
-			hexfile->chunks = CHUNKSIZE;	
+		if (hf->chunks == 0) {
+			hf->instructions = realloc(hf->instructions, sizeof(Instruction)*((hf->len)+CHUNKSIZE));
+			hf->chunks = CHUNKSIZE;	
 		}
-		if (hexfile->instructions != NULL) {
-			printf("\t-> 0x%.6X\n", cmd.word);
-			hexfile->instructions[((hexfile->len)++)] = cmd;
-			hexfile->chunks--;
+		if (hf->instructions != NULL) {
+			/*printf("\t-> 0x%02X%02X%02X\n", cmd.bytes[2], cmd.bytes[1], cmd.bytes[0]);*/
+			hf->instructions[((hf->len)++)] = cmd;
+			hf->chunks--;
 			return 0;
 		} else {
 			printf("ERROR: No Instruction list\n");
@@ -145,43 +145,51 @@ int charToRegSel(char * c, RegSel * r) {
 }
 
 int parseRegisterSelect(char ** line, RegisterSelect * reg) {
-	char r[4] = {0};
-	int chars = 0, disp;
+	char l[7] = {0};
+	char r[7] = {0};
+	int chars = 0, disp = 0, err = 0;
 	reg->disp = NoDisplacement;
 	reg->reg =  RX;
-	
-	if (sscanf(*line, "[%c%c]%n", &(r[0]), &(r[1]), &chars) >= 2) {
-		r[2] = '\0';
-		charToRegSel(&(r[0]), &(reg->reg) );
-		reg->disp = WithDisplacement;
-	} else if (sscanf(*line, "[%c%c,%d]%n", &(r[0]), &(r[1]), &disp, &chars) >= 3) {
-		r[2] = '\0';
-		charToRegSel(&(r[0]), &(reg->reg) );
-		reg->disp = WithDisplacement;
-	} else if (sscanf(*line, "[%c%c%c]%n", &(r[0]), &(r[1]), &(r[2]), &chars) >= 3) {
-		if (r[0] == '+' || r[0] == '-') {
-			r[3] = '\0';
-			charToRegSel(&(r[1]), &(reg->reg) );
-			if (r[0] == '+')
-				reg->disp = PreIncrement;
-			else if (r[0] == '-')
-				reg->disp = PreDecrement;
-		} else if (r[2] == '+' || r[2] == '-'){
-			if (r[0] == '+')
-				reg->disp = PostIncrement;
-			else if (r[0] == '-')
-				reg->disp = PostDecrement;
-			r[2] = '\0';
-			charToRegSel(&(r[0]), &(reg->reg) );
-			
-		}
-	} else if (sscanf(*line, "%c%c%n", &(r[0]), &(r[1]), &chars) >= 3) {
-		r[2] = '\0';
-		charToRegSel(&(r[0]), &(reg->reg) );
+	if (**line == ' ')(*line)++;
+	while((*line)[chars] != ' ' && (*line)[chars] != '\0' ) {
+		l[chars] = (*line)[chars];
+		chars++;
 	}
-	
-	line += chars;
-	return 1;
+	if (sscanf(l, "[%[RISDP]%[0-9XRPC]]%n", r, r+1, &chars) >= 2) {
+		reg->disp = Indirect;
+		r[2] = '\0';
+		err = !charToRegSel(r, &(reg->reg) );
+	} else if (sscanf(l, "[%[RISDP]%[0-9XRPC],%d]%n", r, r+1, &disp, &chars) >= 3) {
+		reg->disp = WithDisplacement;
+		r[2] = '\0';
+		err = !charToRegSel(r, &(reg->reg) );
+	} else if (sscanf(l, "[%[+-]%[RISDP]%[0-9XRPC]]%n", r, r+1, r+2, &chars) >= 3) {
+		if (r[0] == '+')
+			reg->disp = PreIncrement;
+		else if (r[0] == '-')
+			reg->disp = PreDecrement;
+		r[3] = '\0';
+		err = !charToRegSel(r+1, &(reg->reg) );
+	} else if (sscanf(l, "[%[RISDP]%[0-9XRPC]%[+-]]%n", r, r+1, r+2, &chars) >= 3) {
+		if (r[2] == '+')
+			reg->disp = PostIncrement;
+		else if (r[2] == '-')
+			reg->disp = PostDecrement;
+		r[2] = '\0';
+		err = !charToRegSel(r+1, &(reg->reg) );
+	} else if (sscanf(l, "%[RISDP]%[0-9XRPC]%n", r, r+1, &chars) >= 2) {
+		r[2] = '\0';
+		err = !charToRegSel(r, &(reg->reg) );
+	} else {
+		err = 1;
+		chars = 0;
+	}
+	if (err == 0) {
+		*line += chars;
+	} else {
+		printf("Warning: Register %s doesn't exists\n", l);
+	}
+	return err == 0;
 }
 
 int parseConstant(char * line, Constant * cnst) {
@@ -206,11 +214,14 @@ int parseLine(char * line, Instruction * cmd) {
 			;
 		
 		/* Constant */
-		printf("%s", line);
+		/*printf("%s", line);*/
 		if (*line == '#') {
 			int val = 0;
 			sscanf(line, "#%i", &val);
-			cmd->word = val & 0x7FFFFF;
+			cmd->bytes[2] = (val >> 16) & 0xFF;
+			cmd->bytes[1] = (val >>  8) & 0xFF;
+			cmd->bytes[0] = (val >>  0) & 0xFF;
+			cmd->parts.nonExec = 1;
 		} else {
 			if (strlen(line) > 2 && 
 				parseOpCode(&line, &op) && 
@@ -227,7 +238,7 @@ int parseLine(char * line, Instruction * cmd) {
 }
 
 
-int parseFile(char * fname, HexFile * hexfile) {
+int parseFile(char * fname, HexFile * hf) {
 	FILE * fHnd = fopen(fname, "r");
 	int err = 0;
 	if (fHnd != NULL) {
@@ -238,8 +249,9 @@ int parseFile(char * fname, HexFile * hexfile) {
 			if (*buf_p == '\n') {
 				Instruction c;
 				*buf_p = '\0';
-				if (parseLine(&(buf[0]), &c))
-					err = addInstrToHexFile(hexfile, c);
+				if (parseLine(&(buf[0]), &c)) {
+					err = addInstrToHexFile(hf, c);
+				}
 				buf_p = &(buf[0]);
 			} else {
 				buf_p++;
@@ -250,20 +262,22 @@ int parseFile(char * fname, HexFile * hexfile) {
 	return !err;
 }
 
-int saveHexFile(HexFile * hexfile, char * fname) {
-	assert(hexfile != NULL);
+int saveHexFile(HexFile * hf, char * fname) {
+	assert(hf != NULL);
 	{
 		unsigned int i = 0;
 		FILE * fHnd = fopen(fname, "w");
 		if (fHnd != NULL) {
 			fputc(0x23, fHnd);
-			fputc((hexfile->len >> 16) & 0xFF, fHnd);
-			fputc((hexfile->len >> 8) & 0xFF, fHnd);
-			fputc((hexfile->len >> 0) & 0xFF, fHnd);
-			for (i = 0; i < hexfile->len; i++) {
-				fputc(hexfile->instructions[i].bytes[2], fHnd);
-				fputc(hexfile->instructions[i].bytes[1], fHnd);
-				fputc(hexfile->instructions[i].bytes[0], fHnd);
+			fputc(0x00, fHnd);
+			fputc(0x00, fHnd);
+			fputc((hf->len >> 16) & 0xFF, fHnd);
+			fputc((hf->len >>  8) & 0xFF, fHnd);
+			fputc((hf->len >>  0) & 0xFF, fHnd);
+			for (i = 0; i < hf->len; i++) {
+				fputc(hf->instructions[i].bytes[2], fHnd);
+				fputc(hf->instructions[i].bytes[1], fHnd);
+				fputc(hf->instructions[i].bytes[0], fHnd);
 			}
 			fclose(fHnd);
 			return 1;
@@ -273,4 +287,87 @@ int saveHexFile(HexFile * hexfile, char * fname) {
 	}
 }
 
+int loadHexFile(HexFile * hf, char * fname) {
+	assert(hf != NULL && hf->len == 0);
+	{
+		int err = 0;
+		FILE * fHnd = fopen(fname,"r");
+		if (fHnd != NULL) {
+			Instruction instr;
+			err = !(fgetc(fHnd) == 0x23 && fgetc(fHnd) == 0 && fgetc(fHnd) == 0);
+			if (!(err || feof(fHnd))){
+				unsigned int len = 0;
+				len |= (fgetc(fHnd)&0xFF) << 16;
+				len |= (fgetc(fHnd)&0xFF) <<  8;
+				len |= (fgetc(fHnd)&0xFF) <<  0;
+				do {
+					instr.bytes[2] = fgetc(fHnd);
+					instr.bytes[1] = fgetc(fHnd);
+					instr.bytes[0] = fgetc(fHnd);
+					if (!feof(fHnd))
+						addInstrToHexFile(hf, instr);
+				} while(!feof(fHnd) && hf->len <= len && !err);
+			}
+			fclose(fHnd);
+		} else {
+			err = 1;
+		}
+		return err == 0;
+	}
+}
+
+static void fprintRegister(RegSel r, Displacement d, FILE * stream) {
+	switch(d) 
+	{
+		case NoDisplacement:
+			fprintf(stream, "%s ", registerToString(r));
+			break;
+		case Indirect:
+			fprintf(stream, "[%s,%d] ", registerToString(r), 0);
+			break;
+		case WithDisplacement:
+			fprintf(stream, "[%s] ", registerToString(r));
+			break;
+		case PostIncrement:
+			fprintf(stream, "[%s+] ", registerToString(r));
+			break;
+		case PostDecrement:
+			fprintf(stream, "[%s-] ", registerToString(r));
+			break;
+		case PreIncrement:
+			fprintf(stream, "[+%s] ", registerToString(r));
+			break;
+		case PreDecrement:
+			fprintf(stream, "[-%s] ", registerToString(r));
+			break;
+		default:
+			break;
+	}	
+}
+
+void printHexFileRegion(HexFile * hf, FILE* stream, uint32_t start, uint32_t stop) {
+	assert(hf != NULL && stream != NULL);
+	{
+		unsigned int i = 0;
+		printf("Address\tWord\tValue\n");
+		printf("-------\t----\t-----\n");
+		for (i = start; i< stop; i++) {
+			Instruction instr = hf->instructions[i];
+			printf("%06X\t%06X\t", i, instr.word);
+			if (instr.parts.nonExec == 1) {
+				fprintf(stream, "#0x%06X\n", instr.word & 0x3FFFFF);
+			} else {
+				fprintf(stream, "%s ", opCodeToString(instr.parts.opcode));
+				fprintRegister(instr.parts.A, instr.parts.Ia, stream);
+				fprintRegister(instr.parts.B, instr.parts.Ib, stream);
+				fprintf(stream, "\n");
+			}
+		}
+	}
+}
+
+void printHexFile(HexFile * hf, FILE* stream) {
+	assert(hf != NULL && stream != NULL);
+	printHexFileRegion(hf, stream, 0, hf->len);
+}
 
