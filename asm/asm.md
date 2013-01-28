@@ -3,9 +3,9 @@ The CPU23 assembly language.
 
 
 	<ASM>		::= <LINE>'\n'*
-	<LINE>		::= [<LABEL>]\t[<WORD>][<COMMENT>]
+	<LINE>		::= ([<LABEL>]|[<WORD>]) [<COMMENT>]
 	<WORD>		::= <COMMAND>|<VALUE>
-	<COMMAND>	::= <OPCODE> <REGSEL> <REGSEL> [<CONSTANT>]
+	<COMMAND>	::= <OPCODE> ' ' <REGSEL> ' ' <REGSEL> [' ' <CONSTANT>] ' '
 	<OPCODE>	::= 	"NOP" | "RLS" | "SET" | "RST" | 
 				"ADD" | "SUB" | "LSL" | "LSR" | 
 				"AND" | "OR"  | "XOR" | "NOT" |
@@ -25,7 +25,7 @@ The CPU23 assembly language.
 	<VALUE>		::= <LITERAL>
 
 	<COMMENT>	::= %<STRING>
-	<LABEL>		::= :<NAME>
+	<LABEL>		::= :<NAME> ' '
 	<LITERAL>	::= #<NUMBER>
 
 	<NAME>		::= [A-Za-z0-9]*

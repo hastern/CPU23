@@ -214,14 +214,18 @@ int parseLine(char * line, Instruction * cmd) {
 			;
 		
 		/* Constant */
-		/*printf("%s", line);*/
 		if (*line == '#') {
 			int val = 0;
-			sscanf(line, "#%i", &val);
+			sscanf(line, "\t#%i", &val);
 			cmd->bytes[2] = (val >> 16) & 0xFF;
 			cmd->bytes[1] = (val >>  8) & 0xFF;
 			cmd->bytes[0] = (val >>  0) & 0xFF;
 			cmd->parts.nonExec = 1;
+		/* Comment */
+		} else if (*line == '%') {
+			/* Since this is a comment just skip it and do nothing*/
+			cmd = NULL;
+		/* Command */
 		} else {
 			if (strlen(line) > 2 && 
 				parseOpCode(&line, &op) && 
