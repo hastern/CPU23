@@ -28,7 +28,7 @@ The CPU23 assembly language.
 	<LABEL>		::= :<NAME> ' '
 	<LITERAL>	::= #<NUMBER>
 
-	<NAME>		::= [A-Za-z0-9]*
+	<NAME>		::= [A-Za-z0-9]+
 	<NUMBER		::= 0 - 2^23 | 0x000000 - 0x7FFFFF
 
 
