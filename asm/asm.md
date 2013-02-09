@@ -32,23 +32,23 @@ The CPU23 assembly language.
 	<NUMBER		::= 0 - 2^23 | 0x000000 - 0x7FFFFF
 
 
-*Constants*:
+**Constants**:
 The optional constant in a command word is enclosed in parenthesis.
 
-*Values*:
+**Values**:
 Values can be placed directly between the instructions.
 Every value starts with the character #.
 
-*Comments*: 
+**Comments**: 
 A comment starts with a '%' and ends with a new line.
 	
-*OpCodes*:
+**OpCodes**:
 The language consists of 32 opcodes, defined be the CPU specifications.
 Each opcode is represented by its two or three letter representation.
 
 		NOP RLS SET RST ADD SUB LSL LSR AND OR  XOR NOT CMP JMP BRA CLL EMW EMR 
 
-*Register selection*:	
+**Register selection**:	
 A register can be selected by its name.
 
 	R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 RX IR SR SP DP PC

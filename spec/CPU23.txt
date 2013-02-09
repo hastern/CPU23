@@ -4,8 +4,24 @@
 
 	+--------------------------------------------------------------+
 	|                                                              |
+	|         CCCC PPPPP  UU  UU           2222    3333            |
+	|        CC    PP  PP UU  UU          22  22  33  33           |
+	|        CC    PPPPP  UU  UU   ####      22      33            |
+	|        CC    PP     UU  UU           222    33  33           |
+	|         CCCC PP      UUUU           222222   3333            |
+	|                                                              |
 	|   CPU23 Conspiracy Processing Unit                           |
 	|       an esoteric 23-bit processing unit                     |
+	|                                                              |
+	|                                                              |
+	|  This document draft is to be seen as confidential and only  |
+	|  intended for the eyes of real truth seekers.                |
+	|  If you have received this document in error or if you       |
+	|  don't identify yourself as truth seeker; any review,        |
+	|  dissemination, or copying is strictly prohibited.           |
+	|  For your own safety, immediatly delete this document and    |
+	|  all its attachments.                                        |
+	|                                                              |
 	|                                                              |
 	| by                                                           |
 	|     Hanno Sternberg <hanno@almostintelligent.de>             |
@@ -19,12 +35,13 @@
 - Wordsize:
 	* 24 bit words (WORD) with None-Execution bit 
 		-> 23 bit usable data
-- 15 WORD processor registers
+- 16 WORD processor registers
 	* 10 Data registers (R0-R9)
 	* 1 Extend register (RX)
 	* 1 Status register (SR)
 	* 1 Interrupt handler (IH)
 	* 1 Stack pointer (SP)
+	* 1 Display memory pointer (DM)
 	* 1 Programm counter (PC)
 - Up to 2^23 WORDS of internal Memory (IM)
 	* Basic operating system (BM)
@@ -75,83 +92,82 @@ Operand A is always the result register.
 	
 The index Ix can have 8 different values.
 
-Value	| Description
------	| -----------
-0x00	| Direct access: (x)
-0x01	| Indirect access: [x]
-0x02	| Indirect access with displacement: [x,c]
-0x03	| Indirect access with post-Increment [x+]
-0x04	| Indirect access with post-Decrement [x-]
-0x05	| Indirect access with pre-Increment [+x]
-0x06	| Indirect access with pre-Decrement [-x]
-0x07	| Treat B and C as one big constant (Ib only).
-[Register Indexing]
+	Value	| Description
+	-----	| -----------
+	0x00	| Direct access: (x)
+	0x01	| Indirect access: [x]
+	0x02	| Indirect access with displacement: [x,c]
+	0x03	| Indirect access with post-Increment [x+]
+	0x04	| Indirect access with post-Decrement [x-]
+	0x05	| Indirect access with pre-Increment [+x]
+	0x06	| Indirect access with pre-Decrement [-x]
+	0x07	| Treat B and C as one big constant (Ib only).
+	[Register Indexing]
 
 	
 ## --- REGISTER SELECTION ------------------------------------------------------
 
 The 16 processor registers can be selected by a 4 bit value.
 
-Value	| Short	| Description
------	| -----	| -----------
-0x00	| R0	| General purpose register 0
-0x01	| R1	| General purpose register 1
-0x02	| R2	| General purpose register 2
-0x03	| R3	| General purpose register 3
-0x04	| R4	| General purpose register 4
-0x05	| R5	| General purpose register 5
-0x06	| R6	| General purpose register 6
-0x07	| R7	| General purpose register 7
-0x08	| R8	| General purpose register 8
-0x09	| R9	| General purpose register 9
-0x0A	| RX	| Extend register
-0x0B	| SR	| Status register
-0x0C	| IH	| Interrupt handler
-0x0D	| SP	| Stack pointer
-0x0E	| DP	| Display pointer
-0x0F	| PC	| Programm counter
-[Register Selection]
+	Value	| Short	| Description
+	-----	| -----	| -----------
+	0x00	| R0	| General purpose register 0
+	0x01	| R1	| General purpose register 1
+	0x02	| R2	| General purpose register 2
+	0x03	| R3	| General purpose register 3
+	0x04	| R4	| General purpose register 4
+	0x05	| R5	| General purpose register 5
+	0x06	| R6	| General purpose register 6
+	0x07	| R7	| General purpose register 7
+	0x08	| R8	| General purpose register 8
+	0x09	| R9	| General purpose register 9
+	0x0A	| RX	| Extend register
+	0x0B	| SR	| Status register
+	0x0C	| IH	| Interrupt handler
+	0x0D	| SP	| Stack pointer
+	0x0E	| DP	| Display pointer
+	0x0F	| PC	| Programm counter
+	[Register Selection]
 	
 	
 ## --- OPCODES -----------------------------------------------------------------
 
 Every OpCode has a fixed length of 5 bit. 
 
-Value	| Name		| Description
------	| ----		| -----------
-0x00	| NOP		| No Operation.
-0x01	| RLS a b	| Load/Store {a} to {b}.
-0x02	| SET a b	| Set bit b in {a}.
-0x03	| RST a b	| Reset bit b in {a}.
-0x04	| ADD a b	| Sets {a} to {a} + {b}. 
-0x05	| SUB a b	| Sets {a} to {a} - {b}. 
-0x06	| LSL a   c	| Sets {a} to {a} << b+c (logical shift). Implicite Ib = 0x7
-0x07	| LSR a   c	| Sets {a} to {a} >> b+c (logical shift). Implicite Ib = 0x7
-0x08	| AND a b	| Sets {a} to {a} & {b}.
-0x09	| OR  a b	| Sets {a} to {a} |  {b}.
-0x0A	| XOR a b	| Sets {a} to {a} ^ {b}.
-0x0B	| NOT a		| Inverts {a}.
-0x0C	| CMP a b	| Compares {a} and {b} and set the flags in SR.
-0x0D	| JMP a		| Unconditional jump to {a}.
-0x0E	| BRA a b	| Mask SR using (b) and branch to {a}, if not null.
-0x0F	| CLL a		| Call subroutine {a}.
-0x10	| EMW a b	| Write word [b] to block [a] on MD.
-0x11	| EMR a b	| Read word from block [b] to [a].
-0x12	| 		| 
-0x13	| 		| 
-0x14	| 		| 
-0x15	| 		| 
-0x16	| 		| 
-0x17	| 		| 
-0x18	| 		| 
-0x19	| 		| 
-0x1A	| 		| 
-0x1B	| 		| 
-0x1C	| 		| 
-0x1D	| 		| 
-0x1E	| 		| 
-0x1F	| 		| 
-[OpCodes]
+	Value	| Name		| Description
+	-----	| ----		| -----------
+	0x00	| NOP		| No Operation.
+	0x01	| RLS a b	| Load/Store `{a}` to `{b}`.
+	0x02	| SET a b	| Set bit b in `{a}`.
+	0x03	| RST a b	| Reset bit b in `{a}`.
+	0x04	| ADD a b	| Sets `{a} to {a} + {b}`. 
+	0x05	| SUB a b	| Sets `{a} to {a} - {b}`. 
+	0x06	| LSL a 	| Sets `{a} to {a} << b+c` (logical shift). Implicite Ib = 0x7
+	0x07	| LSR a 	| Sets `{a} to {a} >> b+c` (logical shift). Implicite Ib = 0x7
+	0x08	| AND a b	| Sets `{a} to {a} & {b}`.
+	0x09	| OR  a b	| Sets `{a} to {a} | {b}`.
+	0x0A	| XOR a b	| Sets `{a} to {a} ^ {b}`.
+	0x0B	| NOT a		| Inverts `{a}`.
+	0x0C	| CMP a b	| Compares `{a}` and `{b}` and set the flags in SR.
+	0x0D	| JMP a		| Unconditional jump to `{a}`.
+	0x0E	| BRA a b	| Mask SR using `(b)` and branch to `{a}`, if not null.
+	0x10	| EMW a b	| Write word `[b]` to block `[a]` on EM.
+	0x11	| EMR a b	| Read word from block `[b]` on EM to `[a]`.
+	0x12	| 		| 
+	0x13	| 		| 
+	0x14	| 		| 
+	0x15	| 		| 
+	0x16	| 		| 
+	0x17	| 		| 
+	0x18	| 		| 
+	0x19	| 		| 
+	0x1A	| 		| 
+	0x1B	| 		| 
+	0x1C	| 		| 
+	0x1D	| 		| 
+	0x1E	| 		| 
+	0x1F	| 		| 
+	[OpCodes]
 
 
 # === MEMORY ===================================================================
@@ -247,19 +263,19 @@ The Colors are arranged as follows:
 The values get translated into 24-Bit RGB values using the following conversion
 tables
 
-| 2-Bit | 3-Bit | 8-Bit |
-| ----- | ----- | ----- |
-| 0x00  | 0x00  | 0x00  |
-|       | 0x01  | 0x24  |
-|       | 0x02  | 0x48  |
-| 0x01  |       | 0x55  |
-|       | 0x03  | 0x6D  |
-|       | 0x04  | 0x91  |
-| 0x02  |       | 0xAA  |
-|       | 0x05  | 0xB6  |
-|       | 0x06  | 0xDA  |
-| 0x03  | 0x07  | 0xFF  |
-[Color Conversion]
+	| 2-Bit | 3-Bit | 8-Bit |
+	| ----- | ----- | ----- |
+	| 0x00  | 0x00  | 0x00  |
+	|       | 0x01  | 0x24  |
+	|       | 0x02  | 0x48  |
+	| 0x01  |       | 0x55  |
+	|       | 0x03  | 0x6D  |
+	|       | 0x04  | 0x91  |
+	| 0x02  |       | 0xAA  |
+	|       | 0x05  | 0xB6  |
+	|       | 0x06  | 0xDA  |
+	| 0x03  | 0x07  | 0xFF  |
+	[Color Conversion]
 
 
 

@@ -87,7 +87,7 @@ typedef struct s_HexFile HexFile;
  * @param regB Register B
  * @param c Constant
  */
-Instruction buildInstruction(	
+Instruction buildInstruction( 
 	OpCode op, 
 	RegisterSelect regA, 
 	RegisterSelect regB, 
