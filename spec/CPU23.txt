@@ -30,7 +30,7 @@
 	+--------------------------------------------------------------+
 
 
-# === SUMMARY ==================================================================
+# === SUMMARY ================================================================ #
 
 - Wordsize:
 	* 24 bit words (WORD) with None-Execution bit 
@@ -59,7 +59,7 @@ The document will use the following short hand forms:
 	{x} - Can be either (x) or [x].
 
 
-# === STATUS REGISTER ==========================================================
+# === STATUS REGISTER ======================================================== #
 
 	 23  22  21  20  19  18  17  16
 	+---+---+---+---+---+---+---+---+---+---+--- ... ---+
@@ -77,7 +77,7 @@ The document will use the following short hand forms:
 - I: Interrupt enabled
 	
 
-# === INSTRUCTION SET ==========================================================
+# === INSTRUCTION SET ======================================================== #
 
 Each instruction is composed by two operand selectors (a, b) and an opcode.
 Additionally there can be a constant value (c).
@@ -105,7 +105,7 @@ The index Ix can have 8 different values.
 	[Register Indexing]
 
 	
-## --- REGISTER SELECTION ------------------------------------------------------
+## --- REGISTER SELECTION --------------------------------------------------- ##
 
 The 16 processor registers can be selected by a 4 bit value.
 
@@ -130,7 +130,7 @@ The 16 processor registers can be selected by a 4 bit value.
 	[Register Selection]
 	
 	
-## --- OPCODES -----------------------------------------------------------------
+## --- OPCODES -------------------------------------------------------------- ##
 
 Every OpCode has a fixed length of 5 bit. 
 
@@ -170,11 +170,11 @@ Every OpCode has a fixed length of 5 bit.
 	[OpCodes]
 
 
-# === MEMORY ===================================================================
+# === MEMORY ================================================================= #
 
 The memory is organised in four main blocks.
 
-1. Block: Basic operating system, hardware addresses and interrupt handler
+1. Block: DMA Area, Basic operating system, hardware addresses and interrupt handler
 2. Block: Mixed (user) programm an data memory
 3. Block: Stack
 4. Block: Display memory
@@ -210,8 +210,25 @@ Every WORD in the memory has a length of 24 bit, but only the first 23 bits can
 be written by the software. 
 The first bit can only written while programming to prevent execution of data 
 as a command word.	
+
+## -- DMA ------------------------------------------------------------------- ##
+
+Inside the Basic OS Block, the first few words are reserved for special DMA 
+hardware.
+
+The addresses 0x000000 contains the reset address. After power on, the programm 
+counter will be set to this address.
+
+The addresses 0x000001 to 0x00000F are reserved for the GPIO DMA. Those 15 
+words can be read and written from external pins. This way any external 
+hardware can communicate with the CPU. It is possible to overwrite the value of
+0x000000 via GPIO.
+
+The addresses 0x000010 to 0x00001F are reserved as input/output buffer for an 
+HID, like a keyboard. The last 4 words are used by the UART as input and output 
+buffer.
 	
-# === DISPLAY ==================================================================
+# === DISPLAY ================================================================ #
 
 The CPU23 has an integrated text display driver.
 
@@ -231,7 +248,7 @@ in two 8-bit values.
 	+---+---------------+---------------+-----------+
 
 
-# --- CHARACTER SET ------------------------------------------------------------
+## --- CHARACTER SET -------------------------------------------------------- ##
 
 The character set is ASCII compatible.
 
@@ -248,7 +265,7 @@ The character set is ASCII compatible.
 
 
 
-# --- COLORS -------------------------------------------------------------------
+## --- COLORS --------------------------------------------------------------- ##
 
 Colors are displayed using a 8-8-4 palette. Thus there are 8 different values 
 for red and green and 4 different values for blue.
