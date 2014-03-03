@@ -28,7 +28,7 @@ architecture A_REGISTER of E_REGISTER is
 	
 begin
 	
-	store:process(i, clk, en, rst)
+	store:process(i, clk, en, rst, buf_q)
 	begin
 		if (rst = C_RESET_VALUE) then
 			buf_q <= (buf_q'range => '0');
