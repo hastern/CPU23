@@ -1,0 +1,604 @@
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
+
+   
+        +--------------------------------------------------------------+
+        |                                                              |
+        |     CCCCC  PPPPPP   UU   UU               22222     33333    |
+        |    CC      PP   PP  UU   UU              22  222   33   33   |
+        |    CC      PPPPPP   UU   UU    ######       222       333    |
+        |    CC      PP       UU   UU               222      33   33   |
+        |     CCCCC  PP        UUUUU               222222     33333    |
+        |                                                              |
+        |   CPU23LS Conspiracy Processing Unit                         |
+        |       an esoteric 23-bit processing unit                     |
+        |                                                              |
+        |                                                              |
+        |  This document draft is to be treated as confidential and    |
+        |  only intended for the eyes of real seekers of truths        |
+        |  If you have received this document in error or if you       |
+        |  don't identify yourself as seeker of truths; any review,    |
+        |  dissemination, or copying is strictly prohibited.           |
+        |  For your own safety, immediately delete this document and   |
+        |  all its attachments.                                        |
+        |                                                              |
+        |                                                              |
+        | by                                                           |
+        |     Hanno Sternberg [hanno@almostintelligent.de]             |
+        |     Thomas Starke                                            |
+        |                                              (c) 2012 - 2014 |
+        |                                                              |
+        +--------------------------------------------------------------+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 53                                                                            1
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+
+
+# ==[ SUMMARY ]=============================================================== #
+
+- Wordsize:
+        * 24 bit words (WORD) with None-Execution bit 
+                -> 23 bits of usable data
+- 64 WORD processor registers
+        * 46 Data registers (R00-R45)
+        * 1 Extend register (RX)
+        * 1 Return Register (RT)
+        * 1 Status register (SR)
+        * 1 Interrupt mask (IM)
+        * 1 Interrupt vector (IV)
+        * 1 Interrupt selection (IS)
+        * 1 Interrupt handler (IH)
+        * 1 Interrupt return (IR)
+        * 1 Stack pointer (SP)
+        * 1 Frame pointer (FP)
+        * 1 Stack base pointer (BP)
+        * 1 Display memory pointer (DM)
+        * 1 Programm counter (PC)
+- Up to 2^23 WORDS of internal Memory
+        * Basic operating system (BM)
+        * program memory (PM)
+        * stack memory (SM)
+- Up to 2^23 WORDS of external Memory
+        * Word wise R/W access
+- Integrated text display driver
+        * ASCII compatible
+        * Fixed size 80x40 character display with buffer memory (DM)
+        * 8 bit indexed foreground and background colors
+- Integrated debug interface 
+        * Single Stepping Mode
+        * Complete Register and Memory RW-Access
+        * Breakpoints
+        * Register watchdogs
+
+The document will use the following short hand forms:
+         x  - Just the value x.
+        (x) - The value of register x.
+        [x] - The value at the address from register x.
+
+
+
+
+
+
+
+
+
+
+108                                                                            2
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+
+   
+# ==[ STATUS REGISTER ]======================================================= #
+
+         23  22  21  20  19  18  17  16  15  14
+        +---+---+---+---+---+---+---+---+---+---+--- ... ---+
+        | 1 | G | L | E | T | Z | C | O | U | I |           |
+        +---+---+---+---+---+---+---+---+---+---+--- ... ---+
+
+- G: Greater
+- L: Less
+- E: Equal
+- T: True (all bits one)
+- Z: Zero (all bits zero)
+- C: Carry 
+- O: Overflow
+- U: Underflow
+- I: Interrupts enabled (global)
+
+In the later of this document SR(x) refers to the corresponding bit in the SR. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+163                                                                            3
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+
+   
+# ==[ INSTRUCTION SET ]======================================================= #
+
+There are 4 different types of instructions:
+
+1. Triple operand instructions, where the instruction is composed by 
+   two operand selectors (a, b), a result register (d) and an opcode.
+
+         23  22      18 17        12 11         6 5          0
+        +---+----------+------------+------------+------------+
+        | 0 |  OPCODE  |      A     |     B      |      D     |
+        +---+----------+------------+------------+------------+
+
+2. Double operand instructions, where the instruction is composed by 
+   one operand selectors (a), an optional constant (c),
+   a result register (d) and an opcode.
+   
+
+         23  22      18 17        12 11         6 5          0
+        +---+----------+------------+------------+------------+
+        | 0 |  OPCODE  |      A     |     C      |      D     |
+        +---+----------+------------+------------+------------+
+
+        
+3. Single operand instructions, where the instruction is composed by 
+   one operand selectors (a), an constant (c) and an opcode.
+
+         23  22      18 17        12 11                     0
+        +---+----------+------------+------------------------+
+        | 0 |  OPCODE  |      A     |           C            |
+        +---+----------+------------+------------------------+        
+
+3. Single operand instructions, where the instruction is composed by 
+   one result register (d), an constant (c) and an opcode.
+
+         23  22      18 17                     6 5          0
+        +---+----------+------------------------+------------+
+        | 0 |  OPCODE  |            C           |       D    |
+        +---+----------+------------------------+------------+
+
+
+
+
+
+
+
+
+
+
+
+
+218                                                                            4
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+
+   
+## --{ REGISTER SELECTION }-------------------------------------------------- ##
+
+The 64 processor registers can be selected by a 6 bit value.
+
+        Value   | Short | Description
+        -----   | ----- | -----------
+        0x00    | R00   | 
+         to     |       | General purpose registers 0 to 45
+        0x2D    | R45   | 
+        0x34    | RX    | Extend register
+        0x35    | RT    | Return register
+        0x36    | SR    | Status register
+        0x37    | IM    | Interrupt mask
+        0x38    | IV    | Interrupt vector
+        0x39    | IH    | Interrupt handler
+        0x3A    | IH    | Interrupt return
+        0x3B    | SP    | Stack pointer
+        0x3C    | FP    | Frame pointer
+        0x3D    | BP    | Stack base pointer
+        0x3E    | DM    | Display memory pointer
+        0x3F    | PC    | Programm counter
+        [Register Selection]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+273                                                                            5
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+
+   
+## --{ OPCODES }------------------------------------------------------------- ##
+
+Every OpCode has a fixed length of 5 bit. 
+
+        Value | Name        | Description
+        ----- | ----        | -----------
+        0x00  | NOP         | No Operation.
+        0x01  | LD  a   d   | Load  `[a]` to `(d)`.
+        0x02  | ST  a   d   | Store `(a)` to `[d]`.
+        0x03  | CP  a   d   | Copy  `(a)` to `(d)`.
+        0x04  | SET     d c | Set   `(d)` to `c`.
+        0x05  | BIT a     c | Set bit `c & 0x1F` in `(a)` to `c & 0x20`.
+        0x06  | ADD a b d   | Sets `(d)` to `(a) + (b)`. 
+              |             |   Clears and sets SR(Z;T;O;C) 
+        0x07  | SUB a b d   | Sets `(d)` to `(a) - (b)`. 
+              |             |   Clears and sets SR(Z;T;U;C) 
+        0x08  | LSL a   d c | Sets `(d)` to `(a) << c`  (logical shift).
+              |             |   Clears and sets SR(Z;T;C) 
+        0x09  | LSR a   d c | Sets `(d)` to `(a) >> c`  (logical shift).
+              |             |   Clears and sets SR(Z;T;C) 
+        0x0A  | AND a b     | Sets `(d)` to `(a) & (b)` (logical AND). 
+              |             |   Clears and sets SR(Z;T) 
+        0x0B  | OR  a b     | Sets `(d)` to `(a) | (b)` (logical OR). 
+              |             |   Clears and sets SR(Z;T) 
+        0x0C  | XOR a b     | Sets `(d)` to `(a) ^ (b)` (logical XOR). 
+              |             |   Clears and sets SR(Z;T) 
+        0x0D  | NOT a          d | Sets `(d)` to `!(a)`      (logical NOT).
+              |             |   Clears and sets SR(Z;T) 
+        0x0E  | CMP a b     | Compares `(a)` and `(b)` and set the flags in SR.
+              |             |   Clears and sets SR(Z;T;G;L;E)
+        0x0F  | BRA a       | Branch to (a) if SR(Z) is set.
+        0x10  | EMW a   d c | Write `c` words `(a)` to block `[d]` on EM.
+              |             |   Takes `c` Cycles
+        0x11  | EMR a   d c | Read  `c` words from block `[a]` on EM to `(d)`.
+              |             |   Takes `c` Cycles
+        0x12  |             | 
+         to   |             | Reconfigurable
+        0x1E  |             | 
+        0x1F  | HLT         | Halt the CPU, stop all operations
+        [OpCodes]
+
+
+
+
+
+
+
+
+
+
+328                                                                            6
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+
+   
+# ==[ MEMORY ]================================================================ #
+
+The memory is organised in four main blocks.
+
+1. Block: DMA Area, 
+          Basic operating system, 
+          hardware addresses and interrupt handling
+2. Block: Mixed (user) programm an data memory
+3. Block: Stack
+4. Block: Display memory
+
+Diagramm:
+
+        +--------------------+ 0x000000
+        |                    |
+        |      Basic OS      |
+        |                    |
+        +--------------------+ 0x0003FF
+        |                    |
+        |        Memory      |
+        |      _ _ _ _ _     |
+        .     v v v v v v    .
+        .                    .
+        .                    .
+        +--------------------+ (SP)
+        .                    .
+        .                    . 
+        .     ^_^_^_^_^_^    .
+        |                    |
+        |        Stack       |
+        |                    |
+        +--------------------+ (BP) 0x7FF600
+        |                    |
+        |   Display Memory   |
+        |                    |
+        +--------------------+ 0x7FFFFF
+
+Every WORD in the memory has a length of 24 bit, but only the first 23 bits can 
+be written by the software. 
+The first bit can only written while programming to prevent execution of data 
+as a command word.        
+
+
+
+
+
+
+
+
+
+383                                                                            7
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+
+   
+## --{ DMA & SPECIAL PURPOSE ADDRESSES }------------------------------------- ##
+
+Inside the Basic OS Block (BOB), the first few words are reserved for special 
+DMA hardware.
+
+        Address (range)     | RW | Ext | Purpose
+        ---------------     | -- | --- | -------
+        0x000000            | R  |     | Reset Address
+        0x000001            | R  |     | CPU UID
+        0x000002            | R  |     | All Zeros
+        0x000003            | R  |     | All Ones
+        0x000004            | R  |     | Random
+        0x000005            | RW |     | Pseudo Random (23 Bit LFSR) [XNOR 23,18]
+        0x00000B - 0x000022 | RW |     | Interrupt vectors
+        0x000023            | R  |  X  | DMA00 (Write only) [Interrupt selection]
+        0x000024 - 0x00002E | RW |  X  | DMA01 - 11 (Write only)
+        0x00002F - 0x000039 | RW |  X  | DMA12 - 22 (Read only)
+        0x00003A - 0x00003F | R  |     | Basic Interrupt handling routine
+        [Table of special purpose addresses]
+
+The DMA-Interface consists of 2x23 (2 Words) bit IO pins (DMAADDR & DMADATA).
+DMAADDR defines the address via One-Hot encoding.
+DMADATA contains the data to be written or to be read.
+
+If DMA00 is selected the SR(I) will automatically be set to 1.
+DMA01 - DMA11 are write-only data, DMA12 - DMA22 are read-only.
+
+# ==[ INTERRUPT HANDLING ]==================================================== #
+
+The IM, IV, IS, IR and IH registers control the interrupt handling.
+Individual interrupts can be activated through setting the bits in IM, whereby
+1 means interrupt is enabled.
+
+If SR(I) is set:
+        - PC will be copied into IR 
+        - IH will be set to the corresponding interrupt vector (0x00000B - 22)
+
+        SET IS 0x23      # Set constant interrupt selection address
+        LD  IS IV        # Load interrupt vector
+        AND IV IM IS     # Mask interrupt vector with interrupt mask
+        BRA IR           # Return to normal program if the interrupt is inactive
+        JMP IH           # Jump to interrupt handler
+        HLT              # Security measure, should never be reached
+
+
+
+
+
+
+
+438                                                                            8
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+
+   
+# ==[ DEBUG INTERFACE ]======================================================= #
+
+CPU23LS features a sophisticated debugging interface integrated deeply into the 
+core of the CPU. Communication with the outside world is archived over a UART 
+connection.
+
+It is possible to read and write all registers and the memory, therefore 
+controlling the whole CPU through the interface. If needed, the instructions 
+can be single stepped.
+
+The Debug interface controls the CPU through controlling the clock.
+
+
+## --{ DEBUG COMMUNICATION PROTOCOL }---------------------------------------- ##
+
+The communication protocol is packet based, whereby a packet is one word 
+containing a debug instruction in minimum. Additional words with payload data 
+may follow in consequential words.
+
+
+        Value | Size | Operation          | Parameters
+        ----- | ---- | ---------          | ----------
+        0x00  |      |                    |
+        0x01  | 1    | Register read      | None
+        0x02  | 2    | Register write     | Value
+        0x03  | 2    | Memory read        | Starting Address
+        0x04  | 3    | Memory write       | Starting Address, Value, ...
+        0x05  | 2    | Breakpoints        | Address
+        0x06  | 3    | Register Watchdog  | Register, Value
+        0x07  |      |                    | 
+        [Debug Instructions]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+493                                                                            9
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----  
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----  
+
+# ==[ DISPLAY ]=============================================================== #
+
+The CPU23 has an integrated text display driver.
+An integrated VGA controller supports a fixed resolution of 640x480 pixels with 
+a color depth of 12-Bit per pixel.
+
+Every character has a dimension of 8x16 resulting in a display size of 80x30 
+characters.
+
+One WORD of display memory is split in four parts. The leftmost 7-bits define 
+the character. The next 14-bits define the back- and foreground color, split up 
+in two 8-bit values.
+
+         23  22           17 14           07 06       00
+        +---+---------------+---------------+-----------+
+        | 0 |  FOREGROUND   |  BACKGROUND   | CHARACTER |
+        +---+---------------+---------------+-----------+
+
+## --{ CHARACTER SET }------------------------------------------------------- ##
+
+The character set is ASCII compatible.
+
+           | _0  _1  _2  _3  _4  _5  _6  _7  _8  _9  _A  _B  _C  _D  _E  _F
+        ---+---------------------------------------------------------------
+        0_ |                         not used
+        1_ |                         not used
+        2_ | SP  !   "   #   $   %   &   '   (   )   *   +   ,   -   .   / 
+        3_ | 0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ? 
+        4_ | @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O 
+        5_ | P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _ 
+        6_ | `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o 
+        7_ | p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~  DEL
+
+## --{ COLORS }-------------------------------------------------------------- ##
+
+Colors are displayed using a 8-8-4 palette. Thus there are 8 different values 
+for red and green and 4 different values for blue.
+
+         7    6 5     3 2     0
+        +------+-------+-------+
+        | BLUE | GREEN |  RED  |
+        +------+-------+-------+
+        [Color arrangement]
+
+The values get translated into 24-Bit RGB values using the following conversion
+table:
+        8-Bit | 0x00  0x24  0x48  0x55  0x6D  0x91  0xAA  0xB6  0xDA  0xFF
+	------+-----------------------------------------------------------
+        3-Bit | 0x00  0x01  0x02        0x03  0x04        0x05  0x06  0x07
+        2-Bit | 0x00              0x01              0x02              0x03
+        [Color Conversion]
+548                                                                           10
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
+
+                                   NOTES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+605                                                                           11
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
