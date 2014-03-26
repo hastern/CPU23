@@ -1,0 +1,17 @@
+*.o
+*.exe
+*.bak
+/hardware/vhdl/incremental_db
+/hardware/vhdl/db
+*.qpf
+*.rpt
+*.done
+*.smsg
+*.summary
+*.jdi
+*.pin
+*.pof
+*.qsf
+*.qws
+*.sof
+*.qdf
