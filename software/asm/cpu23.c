@@ -89,9 +89,10 @@ char * registerToString(RegisterSelect r) {
 		case 0x2B: return "R43";
 		case 0x2C: return "R44";
 		case 0x2D: return "R45";
-		case 0x34: return "RX"; 
-		case 0x35: return "RT"; 
-		case 0x36: return "SR"; 
+		case 0x33: return "RX"; 
+		case 0x34: return "RT"; 
+		case 0x35: return "SR"; 
+		case 0x36: return "IS"; 
 		case 0x37: return "IM"; 
 		case 0x38: return "IV"; 
 		case 0x39: return "IH"; 
@@ -106,33 +107,59 @@ char * registerToString(RegisterSelect r) {
 }
  
 static void fprintRegister(RegisterSelect r, FILE * stream) {
-	fprintf(stream, "%s ", registerToString(r));
+	if (r < 45) {
+		fprintf(stream, "\033[33m%s\033[0m ", registerToString(r));
+	} else {
+		fprintf(stream, "\033[31m%s\033[0m ", registerToString(r));
+	}
 }
 
 static void fprintConstant(Constant c, FILE* stream) {
-	fprintf(stream, "#0x%X ", c);
+	fprintf(stream, "\033[35m#0x%X\033[0m ", c);
 }
 
 static void printInstruction(Instruction instr, FILE* stream) {
-	fprintf(stream, "%s ", opCodeToString(instr.info.opcode));
+	fprintf(stream, "\033[32m%s\033[0m ", opCodeToString(instr.info.opcode));
 	switch(InstructionTypeTable[instr.info.opcode]) {
 		case 0:
-			fprintRegister(instr.singleOpA.A, stream);
-			fprintConstant(instr.singleOpA.C, stream);
+			if (RegisterUseTable[instr.info.opcode].regA) {
+				fprintRegister(instr.singleOpA.A, stream);
+			} 
+			if (RegisterUseTable[instr.info.opcode].cnst) {
+				fprintConstant(instr.singleOpA.C, stream);
+			}
 			break;
 		case 1: 
-			fprintRegister(instr.singleOpD.D, stream);
-			fprintConstant(instr.singleOpD.C, stream);
+			if (RegisterUseTable[instr.info.opcode].regD) {
+				fprintRegister(instr.singleOpD.D, stream);
+			} 
+			if (RegisterUseTable[instr.info.opcode].cnst) {
+				fprintConstant(instr.singleOpD.C, stream);
+			}
 			break;
 		case 2:
-			fprintRegister(instr.doubleOp.A, stream);
-			fprintConstant(instr.doubleOp.C, stream);
-			fprintRegister(instr.doubleOp.D, stream);
+			if (RegisterUseTable[instr.info.opcode].regA) {
+				fprintRegister(instr.doubleOp.A, stream);
+			} 
+			if (RegisterUseTable[instr.info.opcode].cnst) {
+				fprintConstant(instr.doubleOp.C, stream);
+			} 
+			if (RegisterUseTable[instr.info.opcode].regD) {
+				fprintRegister(instr.doubleOp.D, stream);
+			}
 			break;
 		case 3:
-			fprintRegister(instr.tripleOp.A, stream);
-			fprintRegister(instr.tripleOp.B, stream);
-			fprintRegister(instr.tripleOp.D, stream);
+			if (RegisterUseTable[instr.info.opcode].regA) {
+				fprintRegister(instr.tripleOp.A, stream);
+			} 
+			if (RegisterUseTable[instr.info.opcode].regB) {
+				fprintRegister(instr.tripleOp.B, stream);
+			}
+			if (RegisterUseTable[instr.info.opcode].regD) {
+				fprintRegister(instr.tripleOp.D, stream);
+			}
+			break;
+		case 4:
 			break;
 		default:
 			break;
@@ -271,6 +298,8 @@ int parseLine(char * line, Instruction * cmd) {
 		RegisterSelect rA = 0, rB = 0, rD = 0;
 		Constant cnst = 0;
 	
+		fprintf(stdout, "%s\n", line);
+	
 		/* Constant */
 		if (*line == '#') {
 			int val = 0;
@@ -302,6 +331,7 @@ int parseLine(char * line, Instruction * cmd) {
 						*cmd = buildDoubleInstruction(op, rA, cnst, rD);
 						break;
 					case 3:
+					case 4:
 						*cmd = buildTripleInstruction(op, rA, rB, rD);
 						break;
 					default: cmd = NULL;
@@ -311,6 +341,7 @@ int parseLine(char * line, Instruction * cmd) {
 				printInstruction(*cmd, stdout);
 				fprintf(stdout, "\n");
 			} else {
+				fprintf(stderr, "Failed to parse: %s\n", line);
 				cmd = NULL;
 			}
 		}
@@ -407,7 +438,7 @@ void printHexFileRegion(HexFile * hf, FILE* stream, uint32_t start, uint32_t sto
 		printf("------ ------ -------------\n");
 		for (i = start; i< stop; i++) {
 			Instruction instr = hf->instructions[i];
-			printf("%06X %06X ", i, instr.word);
+			printf("\033[36m%06X\033[0m %06X ", i, instr.word);
 			if (instr.info.nonExec == 1) {
 				fprintf(stream, "#0x%06X\n", instr.word & 0x3FFFFF);
 			} else {

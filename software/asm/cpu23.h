@@ -32,10 +32,10 @@ enum e_RegisterSelect {
 	R35 = 0x23, R36 = 0x24, R37 = 0x25, R38 = 0x26, R39 = 0x27,
 	R40 = 0x28, R41 = 0x29, R42 = 0x2A, R43 = 0x2B, R44 = 0x2C,
 	R45 = 0x2D,
-	RX  = 0x34,
-	RT  = 0x35,
-	SR  = 0x36,
-	IM  = 0x37, IV  = 0x38, IH  = 0x39, IR  = 0x3A,
+	RX  = 0x33,
+	RT  = 0x34,
+	SR  = 0x35,
+	IS  = 0x36, IM  = 0x37, IV  = 0x38, IH  = 0x39, IR  = 0x3A,
 	FP  = 0x3B,
 	SP  = 0x3C,
 	BP  = 0x3D,
@@ -124,13 +124,14 @@ static RegisterUse RegisterUseTable[] = {
 	/* 0x1A= */ {0, 0, 0, 0}, 
 	/* 0x1B= */ {0, 0, 0, 0}, 
 	/* 0x1C= */ {0, 0, 0, 0}, 
+	/* 0x1D= */ {0, 0, 0, 0}, 
 	/* 0x1E= */ {0, 0, 0, 0}, 
 	/* HLT = */ {0, 0, 0, 0} 
 };
 
 /* Instruction length table */
 static int InstructionTypeTable[] = {
-	/* NOP = */ 3, 
+	/* NOP = */ 4, 
 	/* LDR = */ 2, 
 	/* STR = */ 2, 
 	/* CPR = */ 2, 
@@ -160,7 +161,7 @@ static int InstructionTypeTable[] = {
 	/* 0x1B= */ 3, 
 	/* 0x1C= */ 3, 
 	/* 0x1E= */ 3, 
-	/* HLT = */ 3 
+	/* HLT = */ 4 
 };
 
 struct s_HexFile {
