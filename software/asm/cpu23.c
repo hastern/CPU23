@@ -19,61 +19,160 @@
 char * opCodeToString(OpCode o) {
 	switch (o) {
 		case 0x00: return "NOP";
-		case 0x01: return "RLS";
-		case 0x02: return "SET";
-		case 0x03: return "RST";
-		case 0x04: return "ADD";
-		case 0x05: return "SUB";
-		case 0x06: return "LSL";
-		case 0x07: return "LSR";
-		case 0x08: return "AND";
-		case 0x09: return "OR";
-		case 0x0A: return "XOR";
-		case 0x0B: return "NOT";
-		case 0x0C: return "CMP";
-		case 0x0D: return "JMP";
-		case 0x0E: return "BRA";
-		case 0x0F: return "CLL";
-		case 0x10: return "BRS";
-		case 0x11: return "RTS";
-		case 0x12: return "EMW";
-		case 0x13: return "EMR";
+		case 0x01: return "LDR";
+		case 0x02: return "STR";
+		case 0x03: return "CPR";
+		case 0x04: return "SET";
+		case 0x05: return "BIT";
+		case 0x06: return "ADD";
+		case 0x07: return "SUB";
+		case 0x08: return "LSL";
+		case 0x09: return "LSR";
+		case 0x0A: return "AND";
+		case 0x0B: return "OR";
+		case 0x0C: return "XOR";
+		case 0x0D: return "NOT";
+		case 0x0E: return "CMP";
+		case 0x0F: return "BRA";
+		case 0x10: return "EMW";
+		case 0x11: return "EMR";
+		case 0x1F: return "HLT";
 		default: return NULL;
 	}
 }
 
-char * registerToString(RegSel r) {
-	switch(r & 0xF) {
-		case 0x0: return "R0";
-		case 0x1: return "R1";
-		case 0x2: return "R2";
-		case 0x3: return "R3";
-		case 0x4: return "R4";
-		case 0x5: return "R5";
-		case 0x6: return "R6";
-		case 0x7: return "R7";
-		case 0x8: return "R8";
-		case 0x9: return "R9";
-		case 0xA: return "RX";
-		case 0xB: return "IR";
-		case 0xC: return "SR";
-		case 0xD: return "SP";
-		case 0xE: return "DP";
-		case 0xF: return "PC";
+char * registerToString(RegisterSelect r) {
+	switch(r & 0x3F) {
+		case 0x00: return "R0"; 
+		case 0x01: return "R1"; 
+		case 0x02: return "R2"; 
+		case 0x03: return "R3"; 
+		case 0x04: return "R4"; 
+		case 0x05: return "R5"; 
+		case 0x06: return "R6"; 
+		case 0x07: return "R7"; 
+		case 0x08: return "R8"; 
+		case 0x09: return "R9"; 
+		case 0x0A: return "R10";
+		case 0x0B: return "R11";
+		case 0x0C: return "R12";
+		case 0x0D: return "R13";
+		case 0x0E: return "R14";
+		case 0x0F: return "R15";
+		case 0x10: return "R16";
+		case 0x11: return "R17";
+		case 0x12: return "R18";
+		case 0x13: return "R19";
+		case 0x14: return "R20";
+		case 0x15: return "R21";
+		case 0x16: return "R22";
+		case 0x17: return "R23";
+		case 0x18: return "R24";
+		case 0x19: return "R25";
+		case 0x1A: return "R26";
+		case 0x1B: return "R27";
+		case 0x1C: return "R28";
+		case 0x1D: return "R29";
+		case 0x1E: return "R30";
+		case 0x1F: return "R31";
+		case 0x20: return "R32";
+		case 0x21: return "R33";
+		case 0x22: return "R34";
+		case 0x23: return "R35";
+		case 0x24: return "R36";
+		case 0x25: return "R37";
+		case 0x26: return "R38";
+		case 0x27: return "R39";
+		case 0x28: return "R40";
+		case 0x29: return "R41";
+		case 0x2A: return "R42";
+		case 0x2B: return "R43";
+		case 0x2C: return "R44";
+		case 0x2D: return "R45";
+		case 0x34: return "RX"; 
+		case 0x35: return "RT"; 
+		case 0x36: return "SR"; 
+		case 0x37: return "IM"; 
+		case 0x38: return "IV"; 
+		case 0x39: return "IH"; 
+		case 0x3A: return "IR"; 
+		case 0x3B: return "FP"; 
+		case 0x3C: return "SP"; 
+		case 0x3D: return "BP"; 
+		case 0x3E: return "DM"; 
+		case 0x3F: return "PC"; 
 		default: return NULL;
 	}
 }
  
+static void fprintRegister(RegisterSelect r, FILE * stream) {
+	fprintf(stream, "%s ", registerToString(r));
+}
 
-Instruction buildInstruction(OpCode op, RegisterSelect regA, RegisterSelect regB, Constant c) {
+static void fprintConstant(Constant c, FILE* stream) {
+	fprintf(stream, "#0x%X ", c);
+}
+
+static void printInstruction(Instruction instr, FILE* stream) {
+	fprintf(stream, "%s ", opCodeToString(instr.info.opcode));
+	switch(InstructionTypeTable[instr.info.opcode]) {
+		case 0:
+			fprintRegister(instr.singleOpA.A, stream);
+			fprintConstant(instr.singleOpA.C, stream);
+			break;
+		case 1: 
+			fprintRegister(instr.singleOpD.D, stream);
+			fprintConstant(instr.singleOpD.C, stream);
+			break;
+		case 2:
+			fprintRegister(instr.doubleOp.A, stream);
+			fprintConstant(instr.doubleOp.C, stream);
+			fprintRegister(instr.doubleOp.D, stream);
+			break;
+		case 3:
+			fprintRegister(instr.tripleOp.A, stream);
+			fprintRegister(instr.tripleOp.B, stream);
+			fprintRegister(instr.tripleOp.D, stream);
+			break;
+		default:
+			break;
+	}
+}
+
+Instruction buildTripleInstruction(OpCode op, RegisterSelect regA, RegisterSelect regB, RegisterSelect regD) {
+	Instruction instr = {.word = 0};
+	instr.tripleOp.A = regA;
+	instr.tripleOp.B = regB;
+	instr.tripleOp.D = regD;
+	instr.tripleOp.opcode = op;
+	instr.tripleOp.nonExec = 0;
+	return instr;
+}
+
+Instruction buildDoubleInstruction(OpCode op, RegisterSelect regA, Constant C, RegisterSelect regD) {
+	Instruction instr = {.word = 0};
+	instr.doubleOp.A = regA;
+	instr.doubleOp.C = C   ;
+	instr.doubleOp.D = regD;
+	instr.doubleOp.opcode = op;
+	instr.doubleOp.nonExec = 0;
+	return instr;
+}
+Instruction buildSingleAInstruction(OpCode op, RegisterSelect regA, Constant C) {
+	Instruction instr = {.word = 0};
+	instr.singleOpA.A = regA;
+	instr.singleOpA.C = C   ;
+	instr.singleOpA.opcode = op;
+	instr.singleOpA.nonExec = 0;
+	return instr;
+}
+Instruction buildSingleDInstruction(OpCode op, Constant C, RegisterSelect regD) {
 	Instruction instr;
-	instr.parts.C = c;
-	instr.parts.B = regB.reg;
-	instr.parts.Ib = regB.disp;
-	instr.parts.A = regA.reg;
-	instr.parts.Ia = regA.disp;
-	instr.parts.opcode = op;
-	instr.parts.nonExec = 0;
+	instr.word = 0;
+	instr.singleOpD.C = C   ;
+	instr.singleOpD.D = regD;
+	instr.singleOpD.opcode = op;
+	instr.singleOpD.nonExec = 0;
 	return instr;
 }
 	
@@ -103,7 +202,7 @@ int addInstrToHexFile(HexFile * hf, Instruction cmd) {
 			hf->chunks = CHUNKSIZE;	
 		}
 		if (hf->instructions != NULL) {
-			/*printf("\t-> 0x%02X%02X%02X\n", cmd.bytes[2], cmd.bytes[1], cmd.bytes[0]);*/
+			/*printf("\t-> 0x%02X%02X%02X\n", cmd.byte[2], cmd.byte[1], cmd.byte[0]);*/
 			hf->instructions[((hf->len)++)] = cmd;
 			hf->chunks--;
 			return 0;
@@ -117,6 +216,9 @@ int addInstrToHexFile(HexFile * hf, Instruction cmd) {
 int parseOpCode(char ** line, OpCode * op) {
 	int i = 0;
 	char cmd[4] = {0};
+	while (**line == ' ') {
+		(*line)++;
+	}
 	for (i = 0; **line != ' ' && i < 3; (*line)++){
 		cmd[i++] = **line;
 	}
@@ -132,69 +234,32 @@ int parseOpCode(char ** line, OpCode * op) {
 	
 }
 
-int charToRegSel(char * c, RegSel * r) {
-	int i;
-	for(i = 0; i < 16; i++) {
+int parseRegisterSelect(char ** line, RegisterSelect * reg) {
+	int i = 0;
+	char buf[4] = {0};
+	while (**line == ' ') {
+		(*line)++;
+	}
+	for (i = 0; **line != ' ' && i < 3; (*line)++){
+		buf[i++] = **line;
+	}
+	line += i;
+	for (i = 0; i <= 0x3F; i++) {
 		char * regLine = registerToString(i);
-		if ((regLine != NULL) && (strcmp(c, regLine)==0)) {
-			*r = (RegSel) i;
+		if ((regLine != NULL) && (strcmp(buf, regLine)==0)) {
+			*reg = (RegisterSelect) i;
 			return 1;
 		}
 	}
 	return 0;
 }
 
-int parseRegisterSelect(char ** line, RegisterSelect * reg) {
-	char l[7] = {0};
-	char r[7] = {0};
-	int chars = 0, disp = 0, err = 0;
-	reg->disp = NoDisplacement;
-	reg->reg =  RX;
-	if (**line == ' ')(*line)++;
-	while((*line)[chars] != ' ' && (*line)[chars] != '\0' ) {
-		l[chars] = (*line)[chars];
-		chars++;
+int parseConstant(char ** line, Constant * cnst) {
+	while (**line == ' ') {
+		(*line)++;
 	}
-	if (sscanf(l, "[%[RISDP]%[0-9XRPC]]%n", r, r+1, &chars) >= 2) {
-		reg->disp = Indirect;
-		r[2] = '\0';
-		err = !charToRegSel(r, &(reg->reg) );
-	} else if (sscanf(l, "[%[RISDP]%[0-9XRPC],%d]%n", r, r+1, &disp, &chars) >= 3) {
-		reg->disp = WithDisplacement;
-		r[2] = '\0';
-		err = !charToRegSel(r, &(reg->reg) );
-	} else if (sscanf(l, "[%[+-]%[RISDP]%[0-9XRPC]]%n", r, r+1, r+2, &chars) >= 3) {
-		if (r[0] == '+')
-			reg->disp = PreIncrement;
-		else if (r[0] == '-')
-			reg->disp = PreDecrement;
-		r[3] = '\0';
-		err = !charToRegSel(r+1, &(reg->reg) );
-	} else if (sscanf(l, "[%[RISDP]%[0-9XRPC]%[+-]]%n", r, r+1, r+2, &chars) >= 3) {
-		if (r[2] == '+')
-			reg->disp = PostIncrement;
-		else if (r[2] == '-')
-			reg->disp = PostDecrement;
-		r[2] = '\0';
-		err = !charToRegSel(r+1, &(reg->reg) );
-	} else if (sscanf(l, "%[RISDP]%[0-9XRPC]%n", r, r+1, &chars) >= 2) {
-		r[2] = '\0';
-		err = !charToRegSel(r, &(reg->reg) );
-	} else {
-		err = 1;
-		chars = 0;
-	}
-	if (err == 0) {
-		*line += chars;
-	} else {
-		printf("Warning: Register %s doesn't exists\n", l);
-	}
-	return err == 0;
-}
-
-int parseConstant(char * line, Constant * cnst) {
-	if (sscanf(line, "%i", (int *)cnst) == 0) {
-		cnst = 0;
+	if (sscanf(*line, "#%i", (int *)cnst) == 0) {
+		*cnst = 0;
 	}
 	return 1;
 }
@@ -202,25 +267,17 @@ int parseConstant(char * line, Constant * cnst) {
 int parseLine(char * line, Instruction * cmd) {
 	assert(line != NULL);
 	{
-		OpCode 
-			op = NOP
-			;
-		RegisterSelect 
-			rA = {NoDisplacement, RX, 0}, 
-			rB = {NoDisplacement, RX, 0}
-			;
-		Constant 
-			cnst = 0
-			;
-		
+		OpCode op = NOP;
+		RegisterSelect rA = 0, rB = 0, rD = 0;
+		Constant cnst = 0;
+	
 		/* Constant */
 		if (*line == '#') {
 			int val = 0;
-			sscanf(line, "\t#%i", &val);
-			cmd->bytes[2] = (val >> 16) & 0xFF;
-			cmd->bytes[1] = (val >>  8) & 0xFF;
-			cmd->bytes[0] = (val >>  0) & 0xFF;
-			cmd->parts.nonExec = 1;
+			cmd->byte[2] = (val >> 16) & 0xFF;
+			cmd->byte[1] = (val >>  8) & 0xFF;
+			cmd->byte[0] = (val >>  0) & 0xFF;
+			cmd->info.nonExec = 1;
 		/* Comment */
 		} else if (*line == '%') {
 			/* Since this is a comment just skip it and do nothing*/
@@ -228,11 +285,31 @@ int parseLine(char * line, Instruction * cmd) {
 		/* Command */
 		} else {
 			if (strlen(line) > 2 && 
-				parseOpCode(&line, &op) && 
-				parseRegisterSelect(&line, &rA) && 
-				parseRegisterSelect(&line, &rB) && 
-				parseConstant(line, &cnst)) {
-				*cmd = buildInstruction(op, rA, rB, cnst);
+			    parseOpCode(&line, &op) &&
+			    (!(RegisterUseTable[op].regA) || parseRegisterSelect(&line, &rA)) &&
+			    (!(RegisterUseTable[op].regB) || parseRegisterSelect(&line, &rB)) &&
+			    (!(RegisterUseTable[op].regD) || parseRegisterSelect(&line, &rD)) &&
+			    (!(RegisterUseTable[op].cnst) || parseConstant(&line, &cnst))
+			   ) {
+				switch (InstructionTypeTable[op]) {
+					case 0:
+						*cmd = buildSingleAInstruction(op, rA, cnst);
+						break;
+					case 1:
+						*cmd = buildSingleDInstruction(op, cnst, rD);
+						break;
+					case 2:
+						*cmd = buildDoubleInstruction(op, rA, cnst, rD);
+						break;
+					case 3:
+						*cmd = buildTripleInstruction(op, rA, rB, rD);
+						break;
+					default: cmd = NULL;
+						break;
+				}
+				fprintf(stdout, " -> ");
+				printInstruction(*cmd, stdout);
+				fprintf(stdout, "\n");
 			} else {
 				cmd = NULL;
 			}
@@ -270,18 +347,18 @@ int saveHexFile(HexFile * hf, char * fname) {
 	assert(hf != NULL);
 	{
 		unsigned int i = 0;
-		FILE * fHnd = fopen(fname, "w");
+		FILE * fHnd = fopen(fname, "wb");
 		if (fHnd != NULL) {
 			fputc(0x23, fHnd);
-			fputc(0x00, fHnd);
-			fputc(0x00, fHnd);
+			fputc(0xC0, fHnd);
+			fputc(0xDE, fHnd);
 			fputc((hf->len >> 16) & 0xFF, fHnd);
 			fputc((hf->len >>  8) & 0xFF, fHnd);
 			fputc((hf->len >>  0) & 0xFF, fHnd);
 			for (i = 0; i < hf->len; i++) {
-				fputc(hf->instructions[i].bytes[2], fHnd);
-				fputc(hf->instructions[i].bytes[1], fHnd);
-				fputc(hf->instructions[i].bytes[0], fHnd);
+				fputc(hf->instructions[i].byte[2], fHnd);
+				fputc(hf->instructions[i].byte[1], fHnd);
+				fputc(hf->instructions[i].byte[0], fHnd);
 			}
 			fclose(fHnd);
 			return 1;
@@ -295,19 +372,21 @@ int loadHexFile(HexFile * hf, char * fname) {
 	assert(hf != NULL && hf->len == 0);
 	{
 		int err = 0;
-		FILE * fHnd = fopen(fname,"r");
+		FILE * fHnd = fopen(fname,"rb");
 		if (fHnd != NULL) {
 			Instruction instr;
-			err = !(fgetc(fHnd) == 0x23 && fgetc(fHnd) == 0 && fgetc(fHnd) == 0);
+			err = !(fgetc(fHnd) == 0x23 && fgetc(fHnd) == 0xC0 && fgetc(fHnd) == 0xDE);
 			if (!(err || feof(fHnd))){
 				unsigned int len = 0;
 				len |= (fgetc(fHnd)&0xFF) << 16;
 				len |= (fgetc(fHnd)&0xFF) <<  8;
 				len |= (fgetc(fHnd)&0xFF) <<  0;
 				do {
-					instr.bytes[2] = fgetc(fHnd);
-					instr.bytes[1] = fgetc(fHnd);
-					instr.bytes[0] = fgetc(fHnd);
+					int i = 0;
+					for (i = 2; i >= 0; i--) {
+						int ch = fgetc(fHnd);
+						instr.byte[i] = ch;
+					}
 					if (!feof(fHnd))
 						addInstrToHexFile(hf, instr);
 				} while(!feof(fHnd) && hf->len <= len && !err);
@@ -320,50 +399,19 @@ int loadHexFile(HexFile * hf, char * fname) {
 	}
 }
 
-static void fprintRegister(RegSel r, Displacement d, FILE * stream) {
-	switch(d) 
-	{
-		case NoDisplacement:
-			fprintf(stream, "%s ", registerToString(r));
-			break;
-		case Indirect:
-			fprintf(stream, "[%s,%d] ", registerToString(r), 0);
-			break;
-		case WithDisplacement:
-			fprintf(stream, "[%s] ", registerToString(r));
-			break;
-		case PostIncrement:
-			fprintf(stream, "[%s+] ", registerToString(r));
-			break;
-		case PostDecrement:
-			fprintf(stream, "[%s-] ", registerToString(r));
-			break;
-		case PreIncrement:
-			fprintf(stream, "[+%s] ", registerToString(r));
-			break;
-		case PreDecrement:
-			fprintf(stream, "[-%s] ", registerToString(r));
-			break;
-		default:
-			break;
-	}	
-}
-
 void printHexFileRegion(HexFile * hf, FILE* stream, uint32_t start, uint32_t stop) {
 	assert(hf != NULL && stream != NULL);
 	{
 		unsigned int i = 0;
-		printf("Address\tWord\tValue\n");
-		printf("-------\t----\t-----\n");
+		printf("Offset  Word  Value\n");
+		printf("------ ------ -------------\n");
 		for (i = start; i< stop; i++) {
 			Instruction instr = hf->instructions[i];
-			printf("%06X\t%06X\t", i, instr.word);
-			if (instr.parts.nonExec == 1) {
+			printf("%06X %06X ", i, instr.word);
+			if (instr.info.nonExec == 1) {
 				fprintf(stream, "#0x%06X\n", instr.word & 0x3FFFFF);
 			} else {
-				fprintf(stream, "%s ", opCodeToString(instr.parts.opcode));
-				fprintRegister(instr.parts.A, instr.parts.Ia, stream);
-				fprintRegister(instr.parts.B, instr.parts.Ib, stream);
+				printInstruction(instr, stream);
 				fprintf(stream, "\n");
 			}
 		}

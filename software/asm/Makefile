@@ -8,7 +8,7 @@
 # Compiler
 CC			= gcc
 # Linker
-LD			= gcc
+LD			= $(CC)
 # Doc generator
 DOC			= doxygen
 
