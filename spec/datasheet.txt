@@ -286,7 +286,7 @@ Every OpCode has a fixed length of 5 bit.
     0x02  | STR a   d   | Store `(a)` to `[d]`.
     0x03  | CPR a   d   | Copy  `(a)` to `(d)`.
     0x04  | SET     d c | Set   `(d)` to `c`.
-    0x05  | BIT a     c | Set bit `c & 0x1F` in `(a)` to `c & 0x20`.
+    0x05  | BIT a   d c | Set bit `c & 0x1F` in `(d)` to `c & 0x20`.
     0x06  | ADD a b d   | Sets `(d)` to `(a) + (b)`. 
           |             |   Clears and sets SR(Z;T;V;C) 
     0x07  | SUB a b d   | Sets `(d)` to `(a) - (b)`. 
@@ -295,13 +295,13 @@ Every OpCode has a fixed length of 5 bit.
           |             |   Clears and sets SR(Z;T;C) 
     0x09  | LSR a   d c | Sets `(d)` to `(a) >> c`  (logical shift).
           |             |   Clears and sets SR(Z;T;C) 
-    0x0A  | AND a b     | Sets `(d)` to `(a) & (b)` (logical AND). 
+    0x0A  | AND a b d   | Sets `(d)` to `(a) & (b)` (logical AND). 
           |             |   Clears and sets SR(Z;T) 
-    0x0B  | OR  a b     | Sets `(d)` to `(a) | (b)` (logical OR). 
+    0x0B  | OR  a b d   | Sets `(d)` to `(a) | (b)` (logical OR). 
           |             |   Clears and sets SR(Z;T) 
-    0x0C  | XOR a b     | Sets `(d)` to `(a) ^ (b)` (logical XOR). 
+    0x0C  | XOR a b d   | Sets `(d)` to `(a) ^ (b)` (logical XOR). 
           |             |   Clears and sets SR(Z;T) 
-    0x0D  | NOT a     d | Sets `(d)` to `!(a)`      (logical NOT).
+    0x0D  | NOT a   d   | Sets `(d)` to `!(a)`      (logical NOT).
           |             |   Clears and sets SR(Z;T) 
     0x0E  | CMP a b     | Compares `(a)` and `(b)` and set the flags in SR.
           |             |   Clears and sets SR(Z;T;G;L;E)
