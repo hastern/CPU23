@@ -234,10 +234,10 @@ The 64 processor registers can be selected by a 6 bit value.
     0x30    |       | 
     0x31    |       | 
     0x32    |       | 
-    0x33    |       | 
-    0x34    | RX    | Extend register
-    0x35    | RT    | Return register
-    0x36    | SR    | Status register
+    0x33    | RX    | Extend register
+    0x34    | RT    | Return register
+    0x35    | SR    | Status register
+    0x36    | IS    | Interrupt Select
     0x37    | IM    | Interrupt mask
     0x38    | IV    | Interrupt vector
     0x39    | IH    | Interrupt handler
@@ -306,11 +306,12 @@ Every OpCode has a fixed length of 5 bit.
     0x0E  | CMP a b     | Compares `(a)` and `(b)` and set the flags in SR.
           |             |   Clears and sets SR(Z;T;G;L;E)
     0x0F  | BRA a       | Branch to (a) if SR(Z) is set.
-    0x10  | EMW a   d c | Write `c` words `(a)` to block `[d]` on EM.
+    0x10  | JMP a       | Unconditional jump to `(a)`.
+    0x11  | EMW a   d c | Write `c` words `(a)` to block `[d]` on EM.
           |             |   Takes `c` Cycles
-    0x11  | EMR a   d c | Read  `c` words from block `[a]` on EM to `(d)`.
+    0x12  | EMR a   d c | Read  `c` words from block `[a]` on EM to `(d)`.
           |             |   Takes `c` Cycles
-    0x12  |             | 
+    0x13  |             | 
      to   |             | Reconfigurable
     0x1E  |             | 
     0x1F  | HLT         | Halt the CPU, stop all operations
