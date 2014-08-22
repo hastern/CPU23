@@ -117,52 +117,59 @@ static void fprintRegister(RegisterSelect r, FILE * stream) {
 static void fprintConstant(Constant c, FILE* stream) {
 	fprintf(stream, "\033[35m#0x%X\033[0m ", c);
 }
+static void fprintConstantFull(Constant c, FILE* stream) {
+	fprintf(stream, "\033[35m#0x%06X\033[0m ", c);
+}
 
 static void printInstruction(Instruction instr, FILE* stream) {
-	fprintf(stream, "\033[32m%s\033[0m ", opCodeToString(instr.info.opcode));
-	switch(InstructionTypeTable[instr.info.opcode]) {
-		case 0:
-			if (RegisterUseTable[instr.info.opcode].regA) {
-				fprintRegister(instr.singleOpA.A, stream);
-			} 
-			if (RegisterUseTable[instr.info.opcode].cnst) {
-				fprintConstant(instr.singleOpA.C, stream);
-			}
-			break;
-		case 1: 
-			if (RegisterUseTable[instr.info.opcode].regD) {
-				fprintRegister(instr.singleOpD.D, stream);
-			} 
-			if (RegisterUseTable[instr.info.opcode].cnst) {
-				fprintConstant(instr.singleOpD.C, stream);
-			}
-			break;
-		case 2:
-			if (RegisterUseTable[instr.info.opcode].regA) {
-				fprintRegister(instr.doubleOp.A, stream);
-			} 
-			if (RegisterUseTable[instr.info.opcode].cnst) {
-				fprintConstant(instr.doubleOp.C, stream);
-			} 
-			if (RegisterUseTable[instr.info.opcode].regD) {
-				fprintRegister(instr.doubleOp.D, stream);
-			}
-			break;
-		case 3:
-			if (RegisterUseTable[instr.info.opcode].regA) {
-				fprintRegister(instr.tripleOp.A, stream);
-			} 
-			if (RegisterUseTable[instr.info.opcode].regB) {
-				fprintRegister(instr.tripleOp.B, stream);
-			}
-			if (RegisterUseTable[instr.info.opcode].regD) {
-				fprintRegister(instr.tripleOp.D, stream);
-			}
-			break;
-		case 4:
-			break;
-		default:
-			break;
+	if (instr.info.nonExec == 0) {
+		fprintf(stream, "\033[32m%s\033[0m ", opCodeToString(instr.info.opcode));
+		switch(InstructionTypeTable[instr.info.opcode]) {
+			case 0:
+				if (RegisterUseTable[instr.info.opcode].regA) {
+					fprintRegister(instr.singleOpA.A, stream);
+				} 
+				if (RegisterUseTable[instr.info.opcode].cnst) {
+					fprintConstant(instr.singleOpA.C, stream);
+				}
+				break;
+			case 1: 
+				if (RegisterUseTable[instr.info.opcode].regD) {
+					fprintRegister(instr.singleOpD.D, stream);
+				} 
+				if (RegisterUseTable[instr.info.opcode].cnst) {
+					fprintConstant(instr.singleOpD.C, stream);
+				}
+				break;
+			case 2:
+				if (RegisterUseTable[instr.info.opcode].regA) {
+					fprintRegister(instr.doubleOp.A, stream);
+				} 
+				if (RegisterUseTable[instr.info.opcode].cnst) {
+					fprintConstant(instr.doubleOp.C, stream);
+				} 
+				if (RegisterUseTable[instr.info.opcode].regD) {
+					fprintRegister(instr.doubleOp.D, stream);
+				}
+				break;
+			case 3:
+				if (RegisterUseTable[instr.info.opcode].regA) {
+					fprintRegister(instr.tripleOp.A, stream);
+				} 
+				if (RegisterUseTable[instr.info.opcode].regB) {
+					fprintRegister(instr.tripleOp.B, stream);
+				}
+				if (RegisterUseTable[instr.info.opcode].regD) {
+					fprintRegister(instr.tripleOp.D, stream);
+				}
+				break;
+			case 4:
+				break;
+			default:
+				break;
+		}
+	} else {
+		fprintConstantFull(instr.word, stream);
 	}
 }
 
@@ -302,10 +309,8 @@ int parseLine(char * line, Instruction * cmd) {
 	
 		/* Constant */
 		if (*line == '#') {
-			int val = 0;
-			cmd->byte[2] = (val >> 16) & 0xFF;
-			cmd->byte[1] = (val >>  8) & 0xFF;
-			cmd->byte[0] = (val >>  0) & 0xFF;
+			parseConstant(&line, &cnst);
+			cmd->word = cnst;
 			cmd->info.nonExec = 1;
 		/* Comment */
 		} else if (*line == '%') {
@@ -337,13 +342,15 @@ int parseLine(char * line, Instruction * cmd) {
 					default: cmd = NULL;
 						break;
 				}
-				fprintf(stdout, " -> ");
-				printInstruction(*cmd, stdout);
-				fprintf(stdout, "\n");
 			} else {
 				fprintf(stderr, "Failed to parse: %s\n", line);
 				cmd = NULL;
 			}
+		}
+		if (cmd != NULL) {
+			fprintf(stdout, " -> ");
+			printInstruction(*cmd, stdout);
+			fprintf(stdout, "\n");
 		}
 		return cmd != NULL;
 	}
@@ -434,13 +441,14 @@ void printHexFileRegion(HexFile * hf, FILE* stream, uint32_t start, uint32_t sto
 	assert(hf != NULL && stream != NULL);
 	{
 		unsigned int i = 0;
-		printf("Offset  Word  Value\n");
+		printf("Offset  Word  Value        \n");
 		printf("------ ------ -------------\n");
 		for (i = start; i< stop; i++) {
 			Instruction instr = hf->instructions[i];
 			printf("\033[36m%06X\033[0m %06X ", i, instr.word);
 			if (instr.info.nonExec == 1) {
-				fprintf(stream, "#0x%06X\n", instr.word & 0x3FFFFF);
+				fprintConstantFull(instr.word & 0x3FFFFF, stream);
+				fprintf(stream, "\n");
 			} else {
 				printInstruction(instr, stream);
 				fprintf(stream, "\n");
