@@ -4,3 +4,4 @@
 SET R0 #0x01 % Set Register R0 to '1'
 SET R1 #0x02 % Set Register R1 to '2'
 ADD R0 R1 R2 % Add Registers R0 and R1, store result in R2
+HLT
