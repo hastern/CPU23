@@ -75,6 +75,7 @@
     * 1 Frame pointer            (FP)
     * 1 Stack pointer            (SP)
     * 1 Stack base pointer       (BP)
+    * 1 Display base pointer     (DB)
     * 1 Display memory pointer   (DM)
     * 1 Program counter          (PC)
 - Up to 2^23 WORDS of internal Memory
@@ -136,7 +137,6 @@ The document will use the following short hand forms:
 - H: Halt
 
 In the later of this document SR(x) refers to the corresponding bit in the SR. 
-
 
 
 
@@ -229,22 +229,22 @@ The 64 processor registers can be selected by a 6 bit value.
     0x00    | R00   | 
      to     |       | General purpose registers 0 to 45
     0x2D    | R45   | 
-    0x2E    |       | 
+    0x2E    | RX    | Extend register
     0x2F    |       | 
     0x30    |       | 
     0x31    |       | 
     0x32    |       | 
-    0x33    | RX    | Extend register
-    0x34    | RT    | Return register
-    0x35    | SR    | Status register
-    0x36    | IS    | Interrupt Select
-    0x37    | IM    | Interrupt mask
-    0x38    | IV    | Interrupt vector
-    0x39    | IH    | Interrupt handler
-    0x3A    | IR    | Interrupt return
-    0x3B    | FP    | Frame pointer
-    0x3C    | SP    | Stack pointer
-    0x3D    | BP    | Stack base pointer
+    0x33    | RT    | Return register
+    0x34    | SR    | Status register
+    0x35    | IS    | Interrupt Select
+    0x36    | IM    | Interrupt mask
+    0x37    | IV    | Interrupt vector
+    0x38    | IH    | Interrupt handler
+    0x39    | IR    | Interrupt return
+    0x3A    | FP    | Frame pointer
+    0x3B    | SP    | Stack pointer
+    0x3C    | BP    | Stack base pointer
+    0x3D    | DB    | Display base Pointer
     0x3E    | DM    | Display memory pointer
     0x3F    | PC    | Programm counter
     [Register Selection]
@@ -316,7 +316,6 @@ Every OpCode has a fixed length of 5 bit.
     0x1E  |             | 
     0x1F  | HLT         | Halt the CPU, stop all operations
     [OpCodes]
-
 
 
 
