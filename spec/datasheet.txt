@@ -113,7 +113,7 @@ The document will use the following short hand forms:
    
 # ==[ STATUS REGISTER ]======================================================= #
 
-     23  22  21  20  19  18  17  16  15  14  13  12  11  10  09  08  07  06
+      22  21  20  19  18  17  16  15  14  13  12  11  10  09  08  07  06  05
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+...
     | 1 | F | N | O | R | D | X | W | I | T | H | G | E | L | C | U | Z | V | 
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+...
@@ -286,7 +286,7 @@ Every OpCode has a fixed length of 5 bit.
     0x02  | STR a   d   | Store `(a)` to `[d]`.
     0x03  | CPR a   d   | Copy  `(a)` to `(d)`.
     0x04  | SET     d c | Set   `(d)` to `c`.
-    0x05  | BIT a   d c | Set bit `c & 0x1F` in `(d)` to `c & 0x20`.
+    0x05  | BIT a   d c | Copy `(a)` to `(d)` but (re-)set bit `c & 0x1F` to `c & 0x20`.
     0x06  | ADD a b d   | Sets `(d)` to `(a) + (b)`. 
           |             |   Clears and sets SR(Z;T;V;C) 
     0x07  | SUB a b d   | Sets `(d)` to `(a) - (b)`. 
@@ -647,7 +647,7 @@ The character set is ASCII compatible.
 |       |  0x00 |  0x01 |  0x02 |  0x03 |  0x04 |  0x05 |  0x06 |  0x07 |
 |       |       |       |       |       |       |       |       |       |
 |Bright |#5D5D5D|#E09690|#CDEE69|#FFE377|#9CD9F0|#FBB1F9|#77DFD8|#F7F7F7|
-|       |  0x00 |  0x01 |  0x02 |  0x03 |  0x04 |  0x05 |  0x06 |  0x07 |
+|       |  0x08 |  0x09 |  0x0A |  0x0B |  0x0C |  0x0D |  0x0E |  0x0F |
 |       |       |       |       |       |       |       |       |       |
 
 
