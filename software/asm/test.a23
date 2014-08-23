@@ -77,8 +77,16 @@ BRA IR
 #0x000000 
 #0x000000 
 % Program comes here
+SET R4 #0x45
+SET R3 #0xA
+SET RT #0x4A
 SET R0 #0x01 % Set Register R0 to '1'
 SET R1 #0x02 % Set Register R1 to '2'
 ADD R0 R1 R2 % Add Registers R0 and R1, store result in R2
+CPR R2 R1
+CMP R2 R3
+BRA RT
+JMP R4
+NOP
 % Finally Stop
 HLT
