@@ -34,8 +34,9 @@ char * opCodeToString(OpCode o) {
 		case 0x0D: return "NOT";
 		case 0x0E: return "CMP";
 		case 0x0F: return "BRA";
-		case 0x10: return "EMW";
-		case 0x11: return "EMR";
+		case 0x10: return "JMP";
+		case 0x11: return "EMW";
+		case 0x12: return "EMR";
 		case 0x1F: return "HLT";
 		default: return NULL;
 	}
@@ -89,17 +90,22 @@ char * registerToString(RegisterSelect r) {
 		case 0x2B: return "R43";
 		case 0x2C: return "R44";
 		case 0x2D: return "R45";
-		case 0x33: return "RX"; 
-		case 0x34: return "RT"; 
-		case 0x35: return "SR"; 
-		case 0x36: return "IS"; 
-		case 0x37: return "IM"; 
-		case 0x38: return "IV"; 
-		case 0x39: return "IH"; 
-		case 0x3A: return "IR"; 
-		case 0x3B: return "FP"; 
-		case 0x3C: return "SP"; 
-		case 0x3D: return "BP"; 
+		case 0x2E: return "RX"; 
+		case 0x2F: return "0x2F"; 
+		case 0x30: return "0x30"; 
+		case 0x31: return "0x31"; 
+		case 0x32: return "0x32"; 
+		case 0x33: return "RT"; 
+		case 0x34: return "SR"; 
+		case 0x35: return "IS"; 
+		case 0x36: return "IM"; 
+		case 0x37: return "IV"; 
+		case 0x38: return "IH"; 
+		case 0x39: return "IR"; 
+		case 0x3A: return "FP"; 
+		case 0x3B: return "SP"; 
+		case 0x3C: return "BP"; 
+		case 0x3D: return "DB"; 
 		case 0x3E: return "DM"; 
 		case 0x3F: return "PC"; 
 		default: return NULL;
@@ -343,7 +349,7 @@ int parseLine(char * line, Instruction * cmd) {
 						break;
 				}
 			} else {
-				fprintf(stderr, "Failed to parse: %s\n", line);
+				fprintf(stderr, "Failed to parse: '%s'\n", line);
 				cmd = NULL;
 			}
 		}
