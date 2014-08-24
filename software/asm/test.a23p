@@ -1,0 +1,90 @@
+%This is test file for the asm23
+%author: Hanno Sternberg <hanno@almostintelligent.de>
+% 
+% Offset 0x000000             Reset Address
+#0x000040
+% offset 0x000001             CPU UID
+#0x23C0DE 
+% offset 0x000002             All Zeros
+#0x000000 
+% offset 0x000003             All Ones
+#0xFFFFFF 
+% offset 0x000004             Random
+#0x001337 
+% offset 0x000005             Pseudo Random (23 Bit LFSR) [XNOR 23,18]
+#0x001337 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+% offset 0x00000B - 0x000022  Interrupt vectors
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+% offset 0x000023             DMA00 (Write only) [Interrupt selection]
+#0x000000 
+% offset 0x000024 - 0x00002E  DMA01 - 11 (Write only)
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+% offset 0x00002F - 0x000039  DMA12 - 22 (Read only)
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+#0x000000 
+% offset 0x00003A - 0x00003F  Basic Interrupt handling routine
+:stop SET IS #0x23
+LDR IS IV
+AND IV IM IS
+BRA IR
+#0x000000 
+#0x000000 
+#0x000000 
+% Program comes here
+SET R3 #0xA
+SET R0 #0x01 % Set Register R0 to '1'
+SET R1 #0x02 % Set Register R1 to '2'
+:loop ADD R0 R1 R2 % Add Registers R0 and R1, store result in R2
+CPR R2 R1
+CMP R2 R3
+BRA @stop
+JMP @loop
+:stop NOP
+% Finally Stop
+HLT
