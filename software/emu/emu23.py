@@ -6,6 +6,7 @@ import itertools
 import random
 import sys
 import time
+import argparse
 
 class _Getch:
 	"""Gets a single character from standard input.  Does not echo to the
@@ -414,7 +415,7 @@ class Emu23(object):
 			
 	def singleStep(self, filename):
 		getch = _Getch()
-		for word in self._run(filename, True):
+		for word in self._run(filename):
 			self.display()
 			ch = getch()		
 			
@@ -507,5 +508,15 @@ class Emu23(object):
 		
 	
 	
-e = Emu23()	
-e.run("../asm/test.hex")
+if __name__ == "__main__":
+	
+	args = argparse.ArgumentParser()
+	args.add_argument("file", action="store", help="The file containing the bytecode.")
+	args.add_argument("--single-step", "-s", action="store_true", default=False, help="Wait after execution of one command.")
+	
+	opts = vars(args.parse_args())
+	e = Emu23()	
+	if opts['single_step']:
+		e.singleStep(opts['file'])
+	else:
+		e.run(opts['file'])
