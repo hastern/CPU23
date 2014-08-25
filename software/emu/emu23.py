@@ -161,7 +161,7 @@ class Memory(object):
 		elif addr == 0x000002:
 			return 0x000000
 		elif addr == 0x000003:
-			return 0x3FFFFF
+			return 0x7FFFFF
 		elif addr == 0x000004: # Random
 			return random.getrandbits(23)
 		elif addr == 0x000005: # Pseudo Random
@@ -336,15 +336,15 @@ class Emu23(object):
 	def _setFlags(self, res, mask):
 		sr = self.registers[Register.SR].get()
 		# clear flags
-		sr = sr & (mask ^ 0x3FFFFF)
+		sr = sr & (mask ^ 0x7FFFFF)
 		# True Flag
-		if ((res & 0x3FFFFF) == 0x3FFFFF) and (mask & (0x1 << 13) == (0x1 << 13)):
+		if ((res & 0x7FFFFF) == 0x7FFFFF) and (mask & (0x1 << 13) == (0x1 << 13)):
 			sr = sr | (0x1 << 13)
 		# Zero Flag
-		if ((res & 0x3FFFFF) == 0x000000) and (mask & (0x1 << 6) == (0x1 << 6)):
+		if ((res & 0x7FFFFF) == 0x000000) and (mask & (0x1 << 6) == (0x1 << 6)):
 			sr = sr | (0x1 << 6)
 		# Overflow Flag
-		if ((res & 0x3FFFFF) < res) and (mask & (0x1 << 5) == (0x1 << 5)):
+		if ((res & 0x7FFFFF) < res) and (mask & (0x1 << 5) == (0x1 << 5)):
 			sr = sr | (0x1 << 5)
 		# Underflow Flag
 		if (res < 0) and (mask & (0x1 << 7) == (0x1 << 7)):
@@ -364,11 +364,11 @@ class Emu23(object):
 		
 	def halt(self):
 		raise HaltError()
-		
+			
 	def compare(self, a,b):
 		sr = self.registers[Register.SR].get()
 		# clear flags
-		sr = sr & (0x002E40 ^ 0x3FFFFF)
+		sr = sr & (0x002E40 ^ 0x7FFFFF)
 		if (a.get() > b.get()):
 			sr = sr | (0x1 << 11)
 		if (a.get() < b.get()):

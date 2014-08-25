@@ -453,7 +453,7 @@ void printHexFileRegion(HexFile * hf, FILE* stream, uint32_t start, uint32_t sto
 			Instruction instr = hf->instructions[i];
 			printf("\033[36m%06X\033[0m %06X ", i, instr.word);
 			if (instr.info.nonExec == 1) {
-				fprintConstantFull(instr.word & 0x3FFFFF, stream);
+				fprintConstantFull(instr.word & 0x7FFFFF, stream);
 				fprintf(stream, "\n");
 			} else {
 				printInstruction(instr, stream);
