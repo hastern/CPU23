@@ -46,6 +46,18 @@ class _GetchWindows:
 		import msvcrt
 		return msvcrt.getch()
 
+class StatusBits(object):
+	Overflow = 5
+	Zero = 6
+	Underflow = 7
+	Carry = 8
+	Lesser = 9
+	Equal = 10
+	Greater = 11
+	Halt = 12
+	True_ = 13
+	Interrupt = 14
+
 class Register(object):
 	R0  = 0x00
 	R1  = 0x01
@@ -190,7 +202,7 @@ class Memory(object):
 			self.write(offset, word, bootload = True)
 		return self
 			
-		
+	
 
 class NonExecutionError(Exception):
 	pass
@@ -338,19 +350,19 @@ class Emu23(object):
 		# clear flags
 		sr = sr & (mask ^ 0x7FFFFF)
 		# True Flag
-		if ((res & 0x7FFFFF) == 0x7FFFFF) and (mask & (0x1 << 13) == (0x1 << 13)):
-			sr = sr | (0x1 << 13)
+		if ((res & 0x7FFFFF) == 0x7FFFFF) and (mask & (0x1 << StatusBits.True_) == (0x1 << StatusBits.True_)):
+			sr = sr | (0x1 << StatusBits.True_)
 		# Zero Flag
-		if ((res & 0x7FFFFF) == 0x000000) and (mask & (0x1 << 6) == (0x1 << 6)):
-			sr = sr | (0x1 << 6)
+		if ((res & 0x7FFFFF) == 0x000000) and (mask & (0x1 << StatusBits.Zero) == (0x1 << StatusBits.Zero)):
+			sr = sr | (0x1 << StatusBits.Zero)
 		# Overflow Flag
-		if ((res & 0x7FFFFF) < res) and (mask & (0x1 << 5) == (0x1 << 5)):
-			sr = sr | (0x1 << 5)
+		if ((res & 0x7FFFFF) < res) and (mask & (0x1 << StatusBits.Overflow) == (0x1 << StatusBits.Overflow)):
+			sr = sr | (0x1 << StatusBits.Overflow)
 		# Underflow Flag
-		if (res < 0) and (mask & (0x1 << 7) == (0x1 << 7)):
-			sr = sr | (0x1 << 7)
+		if (res < 0) and (mask & (0x1 << StatusBits.Underflow) == (0x1 << StatusBits.Underflow)):
+			sr = sr | (0x1 << StatusBits.Underflow)
 		# Carry Flag
-		sr = sr | ( ((res >> 23) & 0x1) << 8)
+		sr = sr | ( ((res >> 23) & 0x1) << StatusBits.Carry)
 		self.registers[Register.SR].set(sr)
 		
 	def binOperation(self, a,b, op, mask):
@@ -363,19 +375,19 @@ class Emu23(object):
 		return res
 		
 	def halt(self):
-		raise HaltError()
+		self.registers[Register.SR].set(self.registers[Register.SR].get() | (1 << StatusBits.Halt))
 			
 	def compare(self, a,b):
 		sr = self.registers[Register.SR].get()
 		# clear flags
 		sr = sr & (0x002E40 ^ 0x7FFFFF)
 		if (a.get() > b.get()):
-			sr = sr | (0x1 << 11)
+			sr = sr | (0x1 << StatusBits.Greater)
 		if (a.get() < b.get()):
-			sr = sr | (0x1 <<  9)
+			sr = sr | (0x1 <<  StatusBits.Lesser)
 		if (a.get() == b.get()):
-			sr = sr | (0x1 << 10)
-			sr = sr | (0x1 <<  6)
+			sr = sr | (0x1 << StatusBits.Equal)
+			sr = sr | (0x1 <<  StatusBits.Zero)
 		self.registers[Register.SR].set(sr)
 		return self.registers[Register.SR]
 		
@@ -383,7 +395,7 @@ class Emu23(object):
 		return self.registers[Register.PC].set(a.get())
 		
 	def branch(self, a):
-		if ((self.registers[Register.SR].get() >> 6) & 0x1) == 1:
+		if ((self.registers[Register.SR].get() >> StatusBits.Zero) & 0x1) == 1:
 			return self.jump(a)
 		return None
 		
@@ -409,9 +421,12 @@ class Emu23(object):
 				# --- 4 Increment PC, if the instruction is not a jump
 				if dest != self.registers[Register.PC]:
 					self.registers[Register.PC].set(self.registers[Register.PC].get() +1)
-				
+				# --- 0 Check if the CPU was halted
+				if (self.registers[Register.SR].get() & (1 <<StatusBits.Halt)) != 0:
+					raise HaltError()
 		except HaltError:
-			pass
+			self.writeDebugInfo(word, instr)
+			self.display()
 			
 	def singleStep(self, filename):
 		getch = _Getch()
