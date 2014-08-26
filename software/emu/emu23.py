@@ -7,6 +7,7 @@ import random
 import sys
 import time
 import argparse
+import threading
 
 class _Getch:
 	"""Gets a single character from standard input.  Does not echo to the
@@ -45,7 +46,24 @@ class _GetchWindows:
 	def __call__(self):
 		import msvcrt
 		return msvcrt.getch()
-
+		
+class KeyListener(object):
+	def __init__(self, emulator):
+		self.emulator = emulator
+		self.thread = threading.Thread(target=self.listen)
+		self.thread.daemon = True
+		self.thread.start()
+		
+	def listen(self):
+		getch = _Getch()
+		while True:
+			ch = getch()
+			if ord(ch) == 27:
+				self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Halt))
+				break
+			self.emulator.dma.access(3, ord(ch) | 0x800000)
+			
+		
 class StatusBits(object):
 	Overflow = 5
 	Zero = 6
@@ -202,7 +220,31 @@ class Memory(object):
 			self.write(offset, word, bootload = True)
 		return self
 			
-	
+class DMA(object):
+	Addresses = [
+	             0x000023, 0x000024, 0x000025, 0x000026, 0x000027,
+		     0x000028, 0x000029, 0x00002A, 0x00002B, 0x00002C,
+		     0x00002D, 0x00002E, 0x00002F, 0x000030, 0x000031,
+		     0x000032, 0x000033, 0x000034, 0x000035, 0x000036,
+		     0x000037, 0x000038, 0x000039,
+		    ]	
+		
+	def __init__(self, emulator):
+		self.emulator = emulator
+		
+	def access(self, addr, data):
+		try:
+			assert addr < 23
+			self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Interrupt))
+			self.emulator.registers[Register.IH].set(self.emulator.memory.read(DMA.Addresses[addr]-0x18)&0x7FFFFF)
+			self.emulator.memory.write(0x000023, (1 << addr))
+			if addr > 11:
+				data = self.emulator.memory.read(DMA.Addresses[addr])
+			else:
+				self.emulator.memory.write(DMA.Addresses[addr], data)
+			return data
+		except:
+			self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Halt))
 
 class NonExecutionError(Exception):
 	pass
@@ -257,7 +299,7 @@ class Instruction(object):
 	@staticmethod
 	def parse(emulator, bytecode):
 		if (bytecode >> 23) & 0x1 == 1:
-			raise NonExecutionError()
+			raise NonExecutionError("{:6X}".format(bytecode))
 		opcode = (bytecode >> 18) & 0x1F
 		if Instruction.RegisterUsage[opcode][4] == 0:
 			return Instruction(
@@ -311,19 +353,19 @@ class Emu23(object):
 		self.registers = [Register(id = i) for i in xrange(Emu23.RegisterCount)]
 		self.operations = [
 			lambda : None , # NOP  
-			lambda a,d: d.set(self.memory.read(a)), # LDR  
-			lambda a,d: self.memory.write(a, d.get()), # STR  
+			lambda a,d: d.set(self.memory.read(a.get())), # LDR  
+			lambda a,d: self.memory.write(a.get(), d.get()), # STR  
 			lambda a,d: d.set(a.get()), # CPR  
 			lambda d,c: d.set(c), # SET  
-			lambda d,c: d.set(0x1 << c), # BIT  
-			lambda a,b,d: d.set(self.binOperation(a.get(),b.get(),operator.add, 0x002160)), # ADD  
-			lambda a,d,c: d.set(self.binOperation(a.get(),b.get(),operator.sub, 0x0021C0)), # SUB  
-			lambda a,d,c: d.set(self.binOperation(a.get(), c, operation.lshift, 0x002140)), # LSL  
-			lambda a,d,c: d.set(self.binOperation(a.get(), c, operation.rshift, 0x002140)), # LSR  
-			lambda a,b,d: d.set(self.binOperation(a.get(), b.get(), operation.and_, 0x002040)), # AND  
-			lambda a,b,d: d.set(self.binOperation(a.get(), b.get(), operation.or_, 0x002040)), # OR   
-			lambda a,b,d: d.set(self.binOperation(a.get(), b.get(), operation.xor, 0x002040)), # XOR  
-			lambda a,b,d: d.set(self.unaryOperation(a.get(), operation.inv, 0x002040)), # NOT  
+			lambda a,d,c: d.set(self.setBit(a.get(), c & 0x1F, c & 0x20)),
+			lambda a,b,d: d.set(self.binOperation(a.get(),b.get(),operator.add, (1 << StatusBits.Carry)|(1 << StatusBits.True_)|(1<< StatusBits.Zero)|(1<<StatusBits.Overflow))), # ADD  
+			lambda a,d,c: d.set(self.binOperation(a.get(),b.get(),operator.sub, (1 << StatusBits.Carry)|(1 << StatusBits.True_)|(1<< StatusBits.Zero)|(1<<StatusBits.Underflow))), # SUB  
+			lambda a,d,c: d.set(self.binOperation(a.get(), c, operator.lshift, (1 << StatusBits.Carry)|(1 << StatusBits.True_)|(1<< StatusBits.Zero))), # LSL  
+			lambda a,d,c: d.set(self.binOperation(a.get(), c, operator.rshift, (1 << StatusBits.Carry)|(1 << StatusBits.True_)|(1<< StatusBits.Zero))), # LSR  
+			lambda a,b,d: d.set(self.binOperation(a.get(), b.get(), operator.and_, (1 << StatusBits.True_)|(1<< StatusBits.Zero))), # AND  
+			lambda a,b,d: d.set(self.binOperation(a.get(), b.get(), operator.or_, (1 << StatusBits.True_)|(1<< StatusBits.Zero))), # OR   
+			lambda a,b,d: d.set(self.binOperation(a.get(), b.get(), operator.xor, (1 << StatusBits.True_)|(1<< StatusBits.Zero))), # XOR  
+			lambda a,b,d: d.set(self.unaryOperation(a.get(), operator.inv, (1 << StatusBits.True_)|(1<< StatusBits.Zero))), # NOT  
 			self.compare, # CMP  
 			self.branch, # BRA  
 			self.jump, # JMP  
@@ -344,6 +386,7 @@ class Emu23(object):
 			self.halt, # HLT 
 		]
 		self.memory = Memory()
+		self.dma = DMA(self)
 		
 	def _setFlags(self, res, mask):
 		sr = self.registers[Register.SR].get()
@@ -377,6 +420,12 @@ class Emu23(object):
 	def halt(self):
 		self.registers[Register.SR].set(self.registers[Register.SR].get() | (1 << StatusBits.Halt))
 			
+	def setBit(self, org,bit,val):
+		if not val:
+			return org & ~(1 << bit)
+		else:
+			return org | (1 << bit)
+		
 	def compare(self, a,b):
 		sr = self.registers[Register.SR].get()
 		# clear flags
@@ -403,7 +452,7 @@ class Emu23(object):
 		self.memory.open(filename)
 		sys.stdout.write("\033[s") # Save Cursor Position
 		self.registers[Register.DB].set(0x7FF600)
-		self.registers[Register.DM].set(0x7FF600)
+		self.registers[Register.DM].set(0x7FF970)
 		self.registers[Register.BP].set(0x7FF600)
 		self.registers[Register.SP].set(0x7FF600)
 		try:
@@ -421,9 +470,15 @@ class Emu23(object):
 				# --- 4 Increment PC, if the instruction is not a jump
 				if dest != self.registers[Register.PC]:
 					self.registers[Register.PC].set(self.registers[Register.PC].get() +1)
-				# --- 0 Check if the CPU was halted
+				# ---   Check if the CPU was halted
 				if (self.registers[Register.SR].get() & (1 <<StatusBits.Halt)) != 0:
 					raise HaltError()
+				# ---   Check if an interrupt has happpend
+				if (self.registers[Register.SR].get() & (1 <<StatusBits.Interrupt)) != 0:
+					# Save PC to IR
+					self.registers[Register.IR].set(self.registers[Register.PC].get())
+					# Set PC to basic interrupt handling routine
+					self.registers[Register.PC].set(0x00003B)
 		except HaltError:
 			self.writeDebugInfo(word, instr)
 			self.display()
@@ -507,9 +562,9 @@ class Emu23(object):
 		sys.stdout.write("\033[u") # Restore Cursor Position
 		print ".---------------------."
 		print "|    EMULATOR 23      |"
-		print "+---------------------+----------------------------------------------------------+"
+		print "+----------+----------+---------------------------------------------------------------------+"
 		for y in xrange(30):
-			sys.stdout.write("|")
+			sys.stdout.write("| 0x{:06X} |".format(db+(y*80)))
 			for x in xrange(80):
 				word = self.memory.read(db+x+(y*80))
 				char = word & 0x7F
@@ -519,7 +574,7 @@ class Emu23(object):
 				sys.stdout.write(chr(char))
 			sys.stdout.write("\033[0m")
 			print "|"
-		print "'--------------------------------------------------------------------------------'"
+		print "'----------+--------------------------------------------------------------------------------'"
 		
 	
 	
@@ -530,7 +585,8 @@ if __name__ == "__main__":
 	args.add_argument("--single-step", "-s", action="store_true", default=False, help="Wait after execution of one command.")
 	
 	opts = vars(args.parse_args())
-	e = Emu23()	
+	e = Emu23()
+	KeyListener(e)
 	if opts['single_step']:
 		e.singleStep(opts['file'])
 	else:

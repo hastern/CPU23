@@ -21,11 +21,11 @@
 % offset 0x00000B - 0x000022  Interrupt vectors
 #0x000042 % Reset Interrupt
 #0x000000 % Timer Interrupt
-#0x000000 % Keyboard Interrupt
+#0x000000 
+#0x000047 % Keyboard Interrupt
 #0x000000 % Mouse Interrupt
 #0x000000 % UART TX Interrupt
 #0x000000 % UART RX Interrupt
-#0x000000 
 #0x000000 
 #0x000000 
 #0x000000 
@@ -76,18 +76,23 @@ LDR IS IV        % Load interrupt vector
 AND IV IM IS     % Mask interrupt vector with interrupt mask
 BRA IR           % On inactive Interrupt Return to normal program
 JMP IH           % Jump to interrupt handler
-HLT              % Security measure, should never be reached
+HLT
 % offset 0x000042: Here be programs
-SET R3 #0x7
-SET R0 #0x01 % Set Register R0 to '1'
-SET R1 #0x02 % Set Register R1 to '2'
-ADD R0 R1 R2 % Add Registers R0 and R1, store result in R2
-CPR R2 R1
-CMP R2 R3
-SET RX #0x4D
-BRA RX
-SET RX #0x45
-JMP RX
-NOP
+BIT IM IM #0x23 % Active keyboard interrupts
+NOP % Nothing to do while waiting for the interrupt
+SET RT #0x43
+JMP RT
 % Finally Stop
 HLT
+% Keyboard Interrupt
+SET RX #0x000026
+LDR RX R1
+BIT R1 R1 #0x33
+BIT R1 R1 #0x34
+BIT R1 R1 #0x35
+STR DM R1
+SET RX #1
+ADD RX DM DM
+JMP IR % Return to normal program
+% Should never get here
+HLT 
