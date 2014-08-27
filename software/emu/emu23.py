@@ -474,7 +474,7 @@ class Emu23(object):
 				if (self.registers[Register.SR].get() & (1 <<StatusBits.Halt)) != 0:
 					raise HaltError()
 				# ---   Check if an interrupt has happpend
-				if (self.registers[Register.SR].get() & (1 <<StatusBits.Interrupt)) != 0:
+				if (dest ! =self.registers[Register.RX]) and (self.registers[Register.SR].get() & (1 <<StatusBits.Interrupt)) != 0:
 					# Save PC to IR
 					self.registers[Register.IR].set(self.registers[Register.PC].get())
 					# Set PC to basic interrupt handling routine

@@ -80,8 +80,8 @@ HLT
 % offset 0x000042: Here be programs
 BIT IM IM #0x23 % Active keyboard interrupts
 NOP % Nothing to do while waiting for the interrupt
-SET RT #0x43
-JMP RT
+SET RX #0x43
+JMP RX
 % Finally Stop
 HLT
 % Keyboard Interrupt

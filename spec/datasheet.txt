@@ -446,6 +446,8 @@ The IM, IV, IS, IR and IH registers control the interrupt handling.
 Individual interrupts can be activated through setting the bits in IM, whereby
 1 means interrupt is enabled.
 
+If the destination register of the current instruction is RX, then the 
+interrupt will be stalled for one cycle.
 If SR(I) is set:
     - PC will be copied into IR 
     - IH will be set to the corresponding interrupt vector (0x00000B - 22)
@@ -488,8 +490,6 @@ If SR(I) is set:
      0x000020   | 0x000039 | 0x200000 |           | 
      0x000021   | 0x00003A | 0x400000 |           | 
 
-
-     
 493                                                                            9
    ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
    ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
