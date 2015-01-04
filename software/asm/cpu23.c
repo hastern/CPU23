@@ -256,7 +256,7 @@ int addInstrToHexFile(HexFile * hf, Instruction cmd) {
 int parseOpCode(char ** line, OpCode * op) {
 	int i = 0;
 	char cmd[4] = {0};
-	while (**line == ' ') {
+	while (**line == ' ' || **line == '\t') {
 		(*line)++;
 	}
 	for (i = 0; **line != ' ' && i < 3; (*line)++){
@@ -277,7 +277,7 @@ int parseOpCode(char ** line, OpCode * op) {
 int parseRegisterSelect(char ** line, RegisterSelect * reg) {
 	int i = 0;
 	char buf[4] = {0};
-	while (**line == ' ') {
+	while (**line == ' ' || **line == '\t') {
 		(*line)++;
 	}
 	for (i = 0; **line != ' ' && i < 3; (*line)++){
@@ -295,7 +295,7 @@ int parseRegisterSelect(char ** line, RegisterSelect * reg) {
 }
 
 int parseConstant(char ** line, Constant * cnst) {
-	while (**line == ' ') {
+	while (**line == ' ' || **line == '\t') {
 		(*line)++;
 	}
 	if (sscanf(*line, "#%i", (int *)cnst) == 0) {
@@ -311,7 +311,11 @@ int parseLine(char * line, Instruction * cmd) {
 		RegisterSelect rA = 0, rB = 0, rD = 0;
 		Constant cnst = 0;
 	
-		fprintf(stdout, "%s\n", line);
+		while (*line == ' ' || *line == '\t') {
+			(line)++;
+		}
+		/*fprintf(stdout, "%s\n", line);*/
+	
 	
 		/* Constant */
 		if (*line == '#') {
@@ -353,11 +357,13 @@ int parseLine(char * line, Instruction * cmd) {
 				cmd = NULL;
 			}
 		}
+		/*
 		if (cmd != NULL) {
 			fprintf(stdout, " -> ");
 			printInstruction(*cmd, stdout);
 			fprintf(stdout, "\n");
 		}
+		*/
 		return cmd != NULL;
 	}
 }
