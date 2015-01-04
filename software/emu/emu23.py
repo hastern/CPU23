@@ -361,7 +361,7 @@ class Emu23(object):
 		self.operations = [
 			lambda : None , # NOP  
 			lambda a,d: d.set(self.memory.read(a.get())), # LDR  
-			lambda a,d: self.memory.write(a.get(), d.get()), # STR  
+			lambda a,d: self.memory.write(d.get(), a.get()), # STR
 			lambda a,d: d.set(a.get()), # CPR  
 			lambda d,c: d.set(c), # SET  
 			lambda a,d,c: d.set(self.setBit(a.get(), c & 0x1F, c & 0x20)),

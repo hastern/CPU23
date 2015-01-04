@@ -42,7 +42,7 @@
 #0x000000 
 #0x000000 
 #0x0F00BA 
-% offset 0x000023             Interrupt selection / DMAAddr
+% offset 0x000023 Interrupt selection / DMAAddr
 #0x000000 
 % offset 0x000024 - 0x00003A  DMA01 - 11 (Write only)
 #0x000000 
@@ -90,7 +90,7 @@ LDR RX R1
 BIT R1 R1 #0x33
 BIT R1 R1 #0x34
 BIT R1 R1 #0x35
-STR DM R1
+STR R1 DM
 SET RX #1
 ADD RX DM DM
 JMP IR % Return to normal program
