@@ -65,16 +65,23 @@ class KeyListener(object):
 			
 		
 class StatusBits(object):
-	Overflow = 5
-	Zero = 6
-	Underflow = 7
-	Carry = 8
-	Lesser = 9
-	Equal = 10
-	Greater = 11
-	Halt = 12
-	True_ = 13
-	Interrupt = 14
+	Fnord      = 21
+	New        = 20
+	Order      = 19
+	Redundant  = 18
+	Dirty      = 17
+	eXtensions = 16
+	World      = 15
+	Interrupt  = 14
+	True_      = 13
+	Halt       = 12
+	Greater    = 11
+	Equal      = 10
+	Lesser     =  9
+	Carry      =  8
+	Underflow  =  7
+	Zero       =  6
+	Overflow   =  5
 
 class Register(object):
 	R0  = 0x00
