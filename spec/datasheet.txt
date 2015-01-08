@@ -62,6 +62,7 @@
             -> 23 bits of usable data
 - 64 WORD processor registers
     * 46 Data registers          (R00-R45)
+    * 2 Operand register         (RA-RB)
     * 1 Extend register          (RX)
     * 1 Return register          (RT)
     * 1 Status register          (SR)
@@ -103,9 +104,7 @@ The document will use the following short hand forms:
 
 
 
-
-
-
+    
 108                                                                            2
    ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
    ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
@@ -137,6 +136,7 @@ The document will use the following short hand forms:
 - H: Halt
 
 In the later of this document SR(x) refers to the corresponding bit in the SR. 
+
 
 
 
@@ -229,24 +229,24 @@ The 64 processor registers can be selected by a 6 bit value.
     0x00    | R00   | 
      to     |       | General purpose registers 0 to 45
     0x2D    | R45   | 
-    0x2E    | RX    | Extend register
-    0x2F    |       | 
-    0x30    |       | 
-    0x31    |       | 
-    0x32    |       | 
-    0x33    | RT    | Return register
-    0x34    | SR    | Status register
-    0x35    | IS    | Interrupt Select
-    0x36    | IM    | Interrupt mask
-    0x37    | IV    | Interrupt vector
+    0x2E    | RA    | Operand A Register
+    0x2F    | RB    | Operand B Register
+    0x30    | RX    | Extend register
+    0x31    | RT    | Return register
+    0x32    | SR    | Status register
+    0x33    | TR    | Timer register
+    0x34    | PR    | Prescaler register
+    0x35    | IM    | Interrupt mask
+    0x36    | IV    | Interrupt vector
+    0x37    | IS    | Interrupt selection
     0x38    | IH    | Interrupt handler
     0x39    | IR    | Interrupt return
     0x3A    | FP    | Frame pointer
     0x3B    | SP    | Stack pointer
     0x3C    | BP    | Stack base pointer
-    0x3D    | DB    | Display base Pointer
+    0x3D    | DB    | Display base pointer
     0x3E    | DM    | Display memory pointer
-    0x3F    | PC    | Programm counter
+    0x3F    | PC    | Program counter
     [Register Selection]
 
 

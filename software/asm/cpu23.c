@@ -90,12 +90,12 @@ char * registerToString(RegisterSelect r) {
 		case 0x2B: return "R43";
 		case 0x2C: return "R44";
 		case 0x2D: return "R45";
-		case 0x2E: return "RX"; 
-		case 0x2F: return "0x2F"; 
-		case 0x30: return "0x30"; 
-		case 0x31: return "0x31"; 
-		case 0x32: return "0x32"; 
-		case 0x33: return "RT"; 
+		case 0x2E: return "RA"; 
+		case 0x2F: return "RB"; 
+		case 0x30: return "RX"; 
+		case 0x31: return "RT"; 
+		case 0x32: return "TR"; 
+		case 0x33: return "PR"; 
 		case 0x34: return "SR"; 
 		case 0x35: return "IS"; 
 		case 0x36: return "IM"; 

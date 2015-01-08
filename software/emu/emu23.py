@@ -130,8 +130,12 @@ class Register(object):
 	R43 = 0x2B
 	R44 = 0x2C
 	R45 = 0x2D
-	RX  = 0x2E
-	RT  = 0x33
+	RA  = 0x2E
+	RB  = 0x2F
+	RX  = 0x30
+	RT  = 0x31
+	TR  = 0x32
+	PR  = 0x33
 	SR  = 0x34
 	IS  = 0x35
 	IM  = 0x36
@@ -154,9 +158,11 @@ class Register(object):
 		0x1E: "R30", 0x1F: "R31", 0x20: "R32", 0x21: "R33", 0x22: "R34",
 		0x23: "R35", 0x24: "R36", 0x25: "R37", 0x26: "R38", 0x27: "R39",
 		0x28: "R40", 0x29: "R41", 0x2A: "R42", 0x2B: "R43", 0x2C: "R44",
-		0x2D: "R45", 0x2E: "RX ", 0x33: "RT ", 0x34: "SR ", 0x35: "IS ",
-		0x36: "IM ", 0x37: "IV ", 0x38: "IH ", 0x39: "IR ", 0x3A: "FP ",
-		0x3B: "SP ", 0x3C: "BP ", 0x3D: "DB ", 0x3E: "DM ", 0x3F: "PC ",
+		0x2D: "R45", 
+		0x2E: "RA ", 0x2F: "RB ", 0x30: "RX ", 0x31: "RT ", 
+		0x32: "TR ", 0x33: "PR ", 
+		0x34: "SR ", 0x35: "IS ", 0x36: "IM ", 0x37: "IV ", 0x38: "IH ", 0x39: "IR ", 
+		0x3A: "FP ", 0x3B: "SP ", 0x3C: "BP ", 0x3D: "DB ", 0x3E: "DM ", 0x3F: "PC ",
 	}
 	
 	def __init__(self, val = 0, id = 0):
@@ -306,7 +312,7 @@ class Instruction(object):
 	@staticmethod
 	def parse(emulator, bytecode):
 		if (bytecode >> 23) & 0x1 == 1:
-			raise NonExecutionError("{:6X}".format(bytecode))
+			raise NonExecutionError("{:6X} @0x{:06X} ".format(bytecode, emulator.registers[Register.PC].get()))
 		opcode = (bytecode >> 18) & 0x1F
 		if Instruction.RegisterUsage[opcode][4] == 0:
 			return Instruction(
@@ -357,6 +363,7 @@ class Emu23(object):
 	RegisterCount = 64
 
 	def __init__(self):
+		self.debug = ""
 		self.registers = [Register(id = i) for i in xrange(Emu23.RegisterCount)]
 		self.operations = [
 			lambda : None , # NOP  
@@ -417,6 +424,8 @@ class Emu23(object):
 		
 	def binOperation(self, a,b, op, mask):
 		res = op(a,b)
+		if op == operator.or_:
+			self.debug = "BINOP: {} {} {} => {}".format(a,op,b,res)
 		self._setFlags(res, mask)
 		return res	
 	def unaryOperation(self, a, op, mask):
@@ -481,7 +490,7 @@ class Emu23(object):
 				if (self.registers[Register.SR].get() & (1 <<StatusBits.Halt)) != 0:
 					raise HaltError()
 				# ---   Check if an interrupt has happpend
-				if (dest ! =self.registers[Register.RX]) and (self.registers[Register.SR].get() & (1 <<StatusBits.Interrupt)) != 0:
+				if (dest != self.registers[Register.RX]) and (self.registers[Register.SR].get() & (1 <<StatusBits.Interrupt)) != 0:
 					# Save PC to IR
 					self.registers[Register.IR].set(self.registers[Register.PC].get())
 					# Set PC to basic interrupt handling routine
@@ -514,8 +523,8 @@ class Emu23(object):
 		# 0x7FF790 R4_ 000000 000000 000000 000000 000000 000000
 		# 0x7FF7E0
 		# 0x7FF830 PC 000000 opc rga rgb rgd #0xcccccc     SR FNORDXWITHGELCUZV000000  
-		# 0x7FF880 RX 000000 RT 000000 FP 000000 SP 000000 BP 000000 DB 000000 DM 000000 
-		# 0x7FFD00 IS 000000 IM 000000 IV 000000 IH 000000 IR 000000 
+		# 0x7FF880 RA 000000 RB 000000 RX 000000 RT 000000 FP 000000 SP 000000 BP 000000  
+		# 0x7FFD00 DB 000000 DM 000000 IS 000000 IM 000000 IV 000000 IH 000000 IR 000000 
 		# 
 		self._writeText(0x7FF600, "      _0     _1     _2     _3     _4     _5     _6     _7     _8     _9  ", 0x10)
 		self._writeText(0x7FF650, "R0_ ", 0x10) 
@@ -539,30 +548,34 @@ class Emu23(object):
 		sr = self.registers[Register.SR].get()
 		for i,c in zip(range(21,0,-1),"FNORDXWITHGELCUZV"):
 			self._writeText(0x7FF85B+(21-i), c, 0xF0 if ((sr >> i) & 0x1) == 1 else 0x80)
-		self._writeText(0x7FF880, "RX", 0x50) 
-		self._writeText(0x7FF883, "{:06X}".format(self.registers[Register.RX].get()), 0x30)
-		self._writeText(0x7FF88A, "RT", 0x50) 
-		self._writeText(0x7FF88D, "{:06X}".format(self.registers[Register.RT].get()), 0x30)
-		self._writeText(0x7FF894, "FP", 0x50) 
-		self._writeText(0x7FF897, "{:06X}".format(self.registers[Register.FP].get()), 0x30)
-		self._writeText(0x7FF89E, "SP", 0x50) 
-		self._writeText(0x7FF8A1, "{:06X}".format(self.registers[Register.SP].get()), 0x30)
-		self._writeText(0x7FF8A8, "BP", 0x50) 
-		self._writeText(0x7FF8AB, "{:06X}".format(self.registers[Register.BP].get()), 0x30)
-		self._writeText(0x7FF8B2, "DB", 0x50) 
-		self._writeText(0x7FF8B5, "{:06X}".format(self.registers[Register.DB].get()), 0x30)
-		self._writeText(0x7FF8BC, "DM", 0x50) 
-		self._writeText(0x7FF8BF, "{:06X}".format(self.registers[Register.DM].get()), 0x30)
-		self._writeText(0x7FF8D0, "IS", 0x50)
-		self._writeText(0x7FF8D3, "{:06X}".format(self.registers[Register.IS].get()), 0x30)
-		self._writeText(0x7FF8DA, "IM", 0x50)
-		self._writeText(0x7FF8DD, "{:06X}".format(self.registers[Register.IM].get()), 0x30) 
-		self._writeText(0x7FF8E4, "IV", 0x50) 
-		self._writeText(0x7FF8E7, "{:06X}".format(self.registers[Register.IV].get()), 0x30) 
-		self._writeText(0x7FF8EE, "IH", 0x50) 
-		self._writeText(0x7FF8F1, "{:06X}".format(self.registers[Register.IH].get()), 0x30) 
-		self._writeText(0x7FF8F8, "IR", 0x50)
-		self._writeText(0x7FF8FB, "{:06X}".format(self.registers[Register.IR].get()), 0x30)
+		self._writeText(0x7FF880, "RA", 0x50) 
+		self._writeText(0x7FF883, "{:06X}".format(self.registers[Register.RA].get()), 0x30)
+		self._writeText(0x7FF88A, "RB", 0x50) 
+		self._writeText(0x7FF88D, "{:06X}".format(self.registers[Register.RB].get()), 0x30)
+		self._writeText(0x7FF894, "RX", 0x50) 
+		self._writeText(0x7FF897, "{:06X}".format(self.registers[Register.RX].get()), 0x30)
+		self._writeText(0x7FF89E, "RT", 0x50) 
+		self._writeText(0x7FF8A1, "{:06X}".format(self.registers[Register.RT].get()), 0x30)
+		self._writeText(0x7FF8A8, "FP", 0x50) 
+		self._writeText(0x7FF8AB, "{:06X}".format(self.registers[Register.FP].get()), 0x30)
+		self._writeText(0x7FF8B2, "SP", 0x50) 
+		self._writeText(0x7FF8B5, "{:06X}".format(self.registers[Register.SP].get()), 0x30)
+		self._writeText(0x7FF8BC, "BP", 0x50) 
+		self._writeText(0x7FF8BF, "{:06X}".format(self.registers[Register.BP].get()), 0x30)
+		self._writeText(0x7FF8D0, "DB", 0x50) 
+		self._writeText(0x7FF8D3, "{:06X}".format(self.registers[Register.DB].get()), 0x30)
+		self._writeText(0x7FF8DA, "DM", 0x50) 
+		self._writeText(0x7FF8DD, "{:06X}".format(self.registers[Register.DM].get()), 0x30)
+		self._writeText(0x7FF8E4, "IS", 0x50)
+		self._writeText(0x7FF8E7, "{:06X}".format(self.registers[Register.IS].get()), 0x30)
+		self._writeText(0x7FF8EE, "IM", 0x50)
+		self._writeText(0x7FF8F1, "{:06X}".format(self.registers[Register.IM].get()), 0x30) 
+		self._writeText(0x7FF8F8, "IV", 0x50) 
+		self._writeText(0x7FF8FB, "{:06X}".format(self.registers[Register.IV].get()), 0x30) 
+		self._writeText(0x7FF902, "IH", 0x50) 
+		self._writeText(0x7FF905, "{:06X}".format(self.registers[Register.IH].get()), 0x30) 
+		self._writeText(0x7FF90C, "IR", 0x50)
+		self._writeText(0x7FF90F, "{:06X}".format(self.registers[Register.IR].get()), 0x30)
 			
 	def display(self):
 		db = self.registers[Register.DB].get()
@@ -582,7 +595,7 @@ class Emu23(object):
 			sys.stdout.write("\033[0m")
 			print "|"
 		print "'----------+--------------------------------------------------------------------------------'"
-		
+		print self.debug
 	
 	
 if __name__ == "__main__":
