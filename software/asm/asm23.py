@@ -6,6 +6,7 @@
 import os
 import os.path
 import sys
+import argparse
 
 from pyparsing import *
 
@@ -115,6 +116,8 @@ def a23syntax():
 	
 	Number = (Word(nums) ^ Combine(Literal("0x") + Word(hexnums)))
 	
+	File   = Combine(Word(alphanums+"_-/") + Literal(".") + (Word("a23") ^ Word("asm23")))
+	
 	Label  = (Literal(":").suppress() + Word(alphas))
 	
 	Addrs  = (Literal("@").suppress() + Word(alphas)).setParseAction(lambda toks: toks.insert(0, "ADDRS"))
@@ -157,7 +160,8 @@ def a23syntax():
 	      | (Literal("EMR") + Group( RegA + RegX + Cst ) ) \
 	      | (Literal("HLT") ) \
 	      | (Literal("VAR") + Group( Number ) ) \
-	      | (Literal("ORG") + Group( Number ) )              
+	      | (Literal("ORG") + Group( Number ) ) \
+	      | (Literal("INC") + Group( File   ) )
 	
 	Instr.setParseAction(lambda s,l,toks: toks.insert(0, "INSTR"))
 	
@@ -187,6 +191,10 @@ class A23Parser(object):
 		self.filename = "stdin"
 		if fname is not None:
 			self.read(fname)
+			
+	def __iter__(self):
+		for obj in self.ast:
+			yield obj
 			
 	def clear(self):
 		self.labelLoc = {}
@@ -237,7 +245,11 @@ class A23Parser(object):
 	def expandOperations(self):
 		ast = []
 		for obj in self.ast:
-			if isinstance(obj.instr, Instruction):
+			if isinstance(obj.instr, Instruction) and obj.instr.opcode == "INC":
+				fname = obj.instr.args[0]
+				for obj in A23Parser(fname):
+					ast.append(obj)
+			elif isinstance(obj.instr, Instruction):
 				lbl = obj.label
 				for i in range(len(obj.instr.args)):
 					arg = obj.instr.args[i]
@@ -256,7 +268,9 @@ class A23Parser(object):
 						lbl = ""
 						obj.instr.args[i] = Register("RX")
 				obj.label = lbl
-			ast.append(obj)
+				ast.append(obj)
+			else:
+				ast.append(obj)
 		self.ast = ast
 		return self
 		
@@ -306,4 +320,28 @@ class A23Parser(object):
 	
 	
 	def __str__(self):
-		return "Offset(h)         Instruction\n---------         -----------\n" + "\n".join(map(str, self.ast))
+		s  = "Offset(h)         Instruction\n"
+		s += "---------         -----------\n" 
+		s += "\n".join(map(str, self.ast))
+		return s
+		
+if __name__ == "__main__":
+	
+	args = argparse.ArgumentParser()
+	args.add_argument("input", action="store", help="The source code file.")
+	args.add_argument("-o", "--output", action="store", help="The hex file.")
+	
+	opts = vars(args.parse_args())
+	
+	inputfile = opts['input']
+	outputfile = opts['output'] if opts['output'] is not None else (os.path.splitext(inputfile)[0] + ".a23")
+	
+	p = A23Parser()
+	p.read(inputfile)
+	p.expandOperations()
+	p.calcAddressess()
+	p.resolve()
+	p.save(outputfile)
+
+
+

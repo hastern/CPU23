@@ -1,78 +1,22 @@
 %This is test file for the asm23
 %author: Hanno Sternberg <hanno@almostintelligent.de>
 % 
-% Offset 0x000000 - Reset Address
-:RESET  @init
-% offset 0x000001 - CPU UID
-:CPUID  #0x23C0DE 
-% offset 0x000002 - All Zeros
-:ZEROS  #0x000000 
-% offset 0x000003 - All Ones
-:ONES   #0xFFFFFF 
-% offset 0x000004 - Random
-:RAND   #0x001337 
-% offset 0x000005 - Pseudo Random (23 Bit LFSR) [XNOR 23,18]
-:PRAND  #0x001337 
+	INC base.asm23
+
 	ORG 0x00000B
 % offset 0x00000B - 0x000022  Interrupt vectors
-:IRQRST #0x000042 % Reset Interrupt
+:IRQRST @init     % Reset Interrupt
 :IRQTIM #0x000000 % Timer Interrupt
         #0x000000 
 :IRQKEY @keyISR   % Keyboard Interrupt
 :IRQMOU #0x000000 % Mouse Interrupt
 :IRQUTX #0x000000 % UART TX Interrupt
 :IRQURX #0x000000 % UART RX Interrupt
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x0F00BA 
-% offset 0x000023 - Interrupt selection / DMAAddr
-:DMAADR #0x000000 
-% offset 0x000024 - 0x00003A  DMA01 - 11 (Write only)
-:DMARST #0x000000 
-:DMATIM #0x000000 
-        #0x000000 
-:DMAKEY #0x000000
-:DMAMOU #0x000000 
-:DMAUTX #0x000000 
-:DMAURX #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x000000 
-        #0x001DEA 
-% offset 0x00003B - 0x000040  Basic Interrupt handling routine
-:IRQ    BIT SR SR #0xE   % Reset Interrupt-Flag in SR
-        SET IS #0x23     % Set constant interrupt selection address
-        LDR IS IV        % Load interrupt vector
-        AND IV IM IS     % Mask interrupt vector with interrupt mask
-        BRA IR           % On inactive Interrupt Return to normal program
-        JMP IH           % Jump to interrupt handler
-        HLT
+
+	INC dma.asm23
+	INC irq.asm23
+		
+	ORG 0x000042
 % offset 0x000042: Here be programs
 :init   BIT IM IM #0x23 % Active keyboard interrupts
 :main   NOP % Nothing to do while waiting for the interrupt

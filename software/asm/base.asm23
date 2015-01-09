@@ -1,0 +1,13 @@
+	ORG 0x000000
+% Offset 0x000000 - Reset Address
+:RESET  @init
+% offset 0x000001 - CPU UID
+:CPUID  #0x23C0DE 
+% offset 0x000002 - All Zeros
+:ZEROS  #0x000000 
+% offset 0x000003 - All Ones
+:ONES   #0xFFFFFF 
+% offset 0x000004 - Random
+:RAND   #0x001337 
+% offset 0x000005 - Pseudo Random (23 Bit LFSR) [XNOR 23,18]
+:PRAND  #0x001337 
