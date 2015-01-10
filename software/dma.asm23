@@ -1,0 +1,28 @@
+
+	ORG 0x000023
+% offset 0x000023 - Interrupt selection / DMAAddr
+:DMAADR #0x000000 
+% offset 0x000024 - 0x00003A  DMA01 - 11 (Write only)
+:DMARST #0x000000 
+:DMATIM #0x000000 
+        #0x000000 
+:DMAKEY #0x000000
+:DMAMOU #0x000000 
+:DMAUTX #0x000000 
+:DMAURX #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+        #0x000000 
+	#0x001DEA
