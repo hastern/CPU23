@@ -291,9 +291,9 @@ Every OpCode has a fixed length of 5 bit.
           |             |   Clears and sets SR(Z;T;V;C) 
     0x07  | SUB a b d   | Sets `(d)` to `(a) - (b)`. 
           |             |   Clears and sets SR(Z;T;U;C) 
-    0x08  | LSL a   d c | Sets `(d)` to `(a) << c`  (logical shift).
+    0x08  | LSL a b d   | Sets `(d)` to `(a) << (b)`  (logical shift).
           |             |   Clears and sets SR(Z;T;C) 
-    0x09  | LSR a   d c | Sets `(d)` to `(a) >> c`  (logical shift).
+    0x09  | LSR a b d   | Sets `(d)` to `(a) >> (b)`  (logical shift).
           |             |   Clears and sets SR(Z;T;C) 
     0x0A  | AND a b d   | Sets `(d)` to `(a) & (b)` (logical AND). 
           |             |   Clears and sets SR(Z;T) 
@@ -307,10 +307,10 @@ Every OpCode has a fixed length of 5 bit.
           |             |   Clears and sets SR(Z;T;G;L;E)
     0x0F  | BRA a       | Branch to (a) if SR(Z) is set.
     0x10  | JMP a       | Unconditional jump to `(a)`.
-    0x11  | EMW a   d c | Write `c` words `(a)` to block `[d]` on EM.
-          |             |   Takes `c` Cycles
-    0x12  | EMR a   d c | Read  `c` words from block `[a]` on EM to `(d)`.
-          |             |   Takes `c` Cycles
+    0x11  | EMW a b d   | Write `(b)` words `(a)` to block `[d]` on EM.
+          |             |   Takes `(b)` Cycles
+    0x12  | EMR a b d   | Read  `(b)` words from block `[a]` on EM to `(d)`.
+          |             |   Takes `(b)` Cycles
     0x13  |             | 
      to   |             | Reconfigurable
     0x1E  |             | 

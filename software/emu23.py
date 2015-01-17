@@ -266,6 +266,11 @@ class InvalidInstructionError(Exception):
 	pass
 		
 class Instruction(object):
+	TypeAC  = 0
+	TypeDC  = 1
+	TypeACD = 2
+	TypeABD = 3
+	TypeZ   = 4
 	Names = {	
 		0x00: "NOP", 0x01: "LDR", 0x02: "STR", 0x03: "CPR",
 		0x04: "SET", 0x05: "BIT", 0x06: "ADD", 0x07: "SUB",
@@ -275,38 +280,38 @@ class Instruction(object):
 		0x1F: "HLT",
 	}
 	RegisterUsage = [
-		(False, False, False, False, 4), 
-		(True , False, True , False, 2), 
-		(True , False, True , False, 2), 
-		(True , False, True , False, 2), 
-		(False, False, True , True , 1), 
-		(True , False, True , True , 2), 
-		(True , True , True , False, 3), 
-		(True , True , True , False, 3), 
-		(True , False, True , True , 2), 
-		(True , False, True , True , 2), 
-		(True , True , True , False, 3), 
-		(True , True , True , False, 3), 
-		(True , True , True , False, 3), 
-		(True , False, True , False, 2), 
-		(True , True , False, False, 3), 
-		(True , False, False, False, 0), 
-		(True , False, False, False, 0), 
-		(True , False, True , True , 2), 
-		(True , False, True , True , 2), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 3), 
-		(False, False, False, False, 4) 
+		(False, False, False, False, TypeZ),   # NOP
+		(True , False, True , False, TypeABD), # LDR
+		(True , False, True , False, TypeABD), # STR
+		(True , False, True , False, TypeABD), # CPR
+		(False, False, True , True , TypeDC),  # SET
+		(True , False, True , True , TypeACD), # BIT
+		(True , True , True , False, TypeABD), # ADD
+		(True , True , True , False, TypeABD), # SUB
+		(True , True , True , False, TypeABD), # LSL
+		(True , True , True , False, TypeABD), # LSR
+		(True , True , True , False, TypeABD), # AND
+		(True , True , True , False, TypeABD), # OR
+		(True , True , True , False, TypeABD), # XOR
+		(True , False, True , False, TypeABD), # NOT
+		(True , True , False, False, TypeABD), # CMP
+		(True , False, False, False, TypeAC),  # BRA
+		(True , False, False, False, TypeAC),  # JMP
+		(True , True , True , False, TypeABD), # EMW
+		(True , True , True , False, TypeABD), # EMR
+		(False, False, False, False, TypeABD), # RC0
+		(False, False, False, False, TypeABD), # RC1
+		(False, False, False, False, TypeABD), # RC2
+		(False, False, False, False, TypeABD), # RC3
+		(False, False, False, False, TypeABD), # RC4
+		(False, False, False, False, TypeABD), # RC5
+		(False, False, False, False, TypeABD), # RC6
+		(False, False, False, False, TypeABD), # RC7
+		(False, False, False, False, TypeABD), # RC8
+		(False, False, False, False, TypeABD), # RC9
+		(False, False, False, False, TypeABD), # RCA
+		(False, False, False, False, TypeABD), # RCB
+		(False, False, False, False, TypeZ)    # HLT
 	]
 	
 	@staticmethod
@@ -314,33 +319,33 @@ class Instruction(object):
 		if (bytecode >> 23) & 0x1 == 1:
 			raise NonExecutionError("{:6X} @0x{:06X} ".format(bytecode, emulator.registers[Register.PC].get()))
 		opcode = (bytecode >> 18) & 0x1F
-		if Instruction.RegisterUsage[opcode][4] == 0:
+		if Instruction.RegisterUsage[opcode][4] == Instruction.TypeAC:
 			return Instruction(
 				opcode,
 				a = emulator.registers[(bytecode >> 12) & 0x3F],
 				c = (bytecode >> 0) & 0xFFF	
 			)
-		if Instruction.RegisterUsage[opcode][4] == 1:
+		if Instruction.RegisterUsage[opcode][4] == Instruction.TypeDC:
 			return Instruction(
 				opcode,
 				c = (bytecode >> 6) & 0xFFF,
 				d = emulator.registers[(bytecode >> 0) & 0x3F]	
 			)
-		if Instruction.RegisterUsage[opcode][4] == 2:
+		if Instruction.RegisterUsage[opcode][4] == Instruction.TypeACD:
 			return Instruction(
 				opcode,
 				a = emulator.registers[(bytecode >> 12) & 0x3F],
 				c =(bytecode >> 6) & 0x3F,
 				d = emulator.registers[(bytecode >> 0) & 0x3F],
 			)
-		if Instruction.RegisterUsage[opcode][4] == 3:
+		if Instruction.RegisterUsage[opcode][4] == Instruction.TypeABD:
 			return Instruction(
 				opcode,
 				a = emulator.registers[(bytecode >> 12) & 0x3F],
 				b = emulator.registers[(bytecode >> 6) & 0x3F],
 				d = emulator.registers[(bytecode >> 0) & 0x3F],
 			)
-		if Instruction.RegisterUsage[opcode][4] == 4:
+		if Instruction.RegisterUsage[opcode][4] == Instruction.TypeZ:
 			return Instruction(opcode)
 		raise InvalidInstructionError()	
 	

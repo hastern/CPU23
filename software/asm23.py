@@ -147,8 +147,8 @@ def a23syntax():
 	      | (Literal("BIT") + Group( RegA + RegX + Cst  ) ) \
 	      | (Literal("ADD") + Group( RegA + RegB + RegX ) ) \
 	      | (Literal("SUB") + Group( RegA + RegB + RegX ) ) \
-	      | (Literal("LSL") + Group( RegA + RegX + Cst  ) ) \
-	      | (Literal("LSR") + Group( RegA + RegX + Cst  ) ) \
+	      | (Literal("LSL") + Group( RegA + RegB + RegX ) ) \
+	      | (Literal("LSR") + Group( RegA + RegB + RegX ) ) \
 	      | (Literal("AND") + Group( RegA + RegB + RegX ) ) \
 	      | (Literal("OR" ) + Group( RegA + RegB + RegX ) ) \
 	      | (Literal("XOR") + Group( RegA + RegB + RegX ) ) \
@@ -156,8 +156,8 @@ def a23syntax():
 	      | (Literal("CMP") + Group( RegA + RegB ) ) \
 	      | (Literal("BRA") + Group( RegX ) ) \
 	      | (Literal("JMP") + Group( RegX ) ) \
-	      | (Literal("EMW") + Group( RegA + RegX + Cst ) ) \
-	      | (Literal("EMR") + Group( RegA + RegX + Cst ) ) \
+	      | (Literal("EMW") + Group( RegA + RegB + RegX ) ) \
+	      | (Literal("EMR") + Group( RegA + RegB + RegX ) ) \
 	      | (Literal("HLT") ) \
 	      | (Literal("VAR") + Group( Number ) ) \
 	      | (Literal("ORG") + Group( Number ) ) \
