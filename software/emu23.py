@@ -61,7 +61,7 @@ class KeyListener(object):
 			if ord(ch) == 27:
 				self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Halt))
 				break
-			self.emulator.dma.access(3, ord(ch) | 0x800000)
+			self.emulator.dma.access(3, ord(ch))
 			
 		
 class StatusBits(object):
@@ -252,9 +252,9 @@ class DMA(object):
 			self.emulator.registers[Register.IH].set(self.emulator.memory.read(DMA.Addresses[addr]-0x18)&0x7FFFFF)
 			self.emulator.memory.write(0x000023, (1 << addr))
 			if addr > 11:
-				data = self.emulator.memory.read(DMA.Addresses[addr])
+				data = self.emulator.memory.read(DMA.Addresses[addr]) & 0x7FFFFF
 			else:
-				self.emulator.memory.write(DMA.Addresses[addr], data)
+				self.emulator.memory.write(DMA.Addresses[addr], data | 0x800000)
 			return data
 		except:
 			self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Halt))
