@@ -283,7 +283,7 @@ Every OpCode has a fixed length of 5 bit.
     ----- | ----        | -----------
     0x00  | NOP         | No Operation.
     0x01  | LDR a   d   | Load  `[a]` to `(d)`.
-    0x02  | STR a   d   | Store `(a)` to `[d]`.
+    0x02  | STR a b     | Store `(a)` to `[b]`.
     0x03  | CPR a   d   | Copy  `(a)` to `(d)`.
     0x04  | SET     d c | Set   `(d)` to `c`.
     0x05  | BIT a   d c | Copy `(a)` to `(d)` but (re-)set bit `c & 0x1F` to `c & 0x20`.
