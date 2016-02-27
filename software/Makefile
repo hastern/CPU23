@@ -1,9 +1,9 @@
-# ---------------------------------------------	#
-# asm23 - CPU23 Assembler			#
-# Hanno Sternberg				#
-# 						#
-# Makefile					#
-# ---------------------------------------------	#
+# --------------------------------------------- #
+# asm23 - CPU23 Assembler                       #
+# Hanno Sternberg                               #
+#                                               #
+# Makefile                                      #
+# --------------------------------------------- #
 
 # Compiler
 CC			= gcc
@@ -52,7 +52,7 @@ $(BINARY_ASM): $(OBJECTS_ASM)
 	@echo "  - linking $@"
 	$(LD) $(LDFLAGS) $(OBJECTS_ASM) -o $(BINARY_ASM)
 	@echo "  ... done"
-	
+
 # Link files to an executable
 $(BINARY_DASM): $(OBJECTS_DASM)
 	@echo ""
@@ -85,4 +85,3 @@ help:
 	@echo "make doc      - create documentation"
 	@echo "make debug    - create program with DEBUG enabled"
 
-	

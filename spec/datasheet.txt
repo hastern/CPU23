@@ -1,6 +1,6 @@
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
-    
+
       +--------------------------------------------------------------+
       |                                                              |
       |   .oooooo.  ooooooooo.  ooooo     ooo    .oooo.     .oooo.   |
@@ -46,19 +46,19 @@
       |                                              (c) 2012 - 2014 |
       |                                                              |
       +--------------------------------------------------------------+
-    
+
 
 
 
  53                                                                            1
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 
 # ==[ SUMMARY ]=============================================================== #
 
 - Wordsize:
-    * 24 bit words (WORD) with None-Execution bit 
+    * 24 bit words (WORD) with None-Execution bit
             -> 23 bits of usable data
 - 64 WORD processor registers
     * 46 Data registers          (R00-R45)
@@ -89,7 +89,7 @@
     * ASCII compatible
     * Fixed size 80x40 character display with buffer memory (DM)
     * 8 bit indexed foreground and background colors
-- Integrated debug interface 
+- Integrated debug interface
     * Single Stepping Mode
     * Complete Register and Memory RW-Access
     * Breakpoints
@@ -104,17 +104,17 @@ The document will use the following short hand forms:
 
 
 
-    
-108                                                                            2
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
 
-   
+108                                                                            2
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+
+
 # ==[ STATUS REGISTER ]======================================================= #
 
       22  21  20  19  18  17  16  15  14  13  12  11  10  09  08  07  06  05
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+...
-    | 1 | F | N | O | R | D | X | W | I | T | H | G | E | L | C | U | Z | V | 
+    | 1 | F | N | O | R | D | X | W | I | T | H | G | E | L | C | U | Z | V |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+...
 
 - G: Greater
@@ -122,10 +122,10 @@ The document will use the following short hand forms:
 - E: Equal
 - T: True (all bits one)
 - Z: Zero (all bits zero)
-- C: Carry 
+- C: Carry
 - V: Overflow
 - U: Underflow
-- I: Interrupts active 
+- I: Interrupts active
 - D: Dirty
 - N: New
 - W: World
@@ -135,7 +135,7 @@ The document will use the following short hand forms:
 - X: eXtensions
 - H: Halt
 
-In the later of this document SR(x) refers to the corresponding bit in the SR. 
+In the later of this document SR(x) refers to the corresponding bit in the SR.
 
 
 
@@ -161,15 +161,15 @@ In the later of this document SR(x) refers to the corresponding bit in the SR.
 
 
 163                                                                            3
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
-   
+
 # ==[ INSTRUCTION SET ]======================================================= #
 
 There are 4 different types of instructions:
 
-1. Triple operand instructions, where the instruction is composed by 
+1. Triple operand instructions, where the instruction is composed by
    two operand selectors (a, b), a result register (d) and an opcode.
 
      23  22      18 17        12 11         6 5          0
@@ -177,26 +177,26 @@ There are 4 different types of instructions:
     | 0 |  OPCODE  |      A     |     B      |      D     |
     +---+----------+------------+------------+------------+
 
-2. Double operand instructions, where the instruction is composed by 
+2. Double operand instructions, where the instruction is composed by
    one operand selectors (a), an optional constant (c),
    a result register (d) and an opcode.
-   
+
 
      23  22      18 17        12 11         6 5          0
     +---+----------+------------+------------+------------+
     | 0 |  OPCODE  |      A     |     C      |      D     |
     +---+----------+------------+------------+------------+
 
-    
-3. Single operand instructions, where the instruction is composed by 
+
+3. Single operand instructions, where the instruction is composed by
    one operand selectors (a), an constant (c) and an opcode.
 
      23  22      18 17        12 11                     0
     +---+----------+------------+------------------------+
     | 0 |  OPCODE  |      A     |           C            |
-    +---+----------+------------+------------------------+        
+    +---+----------+------------+------------------------+
 
-3. Single operand instructions, where the instruction is composed by 
+3. Single operand instructions, where the instruction is composed by
    one result register (d), an constant (c) and an opcode.
 
      23  22      18 17                     6 5          0
@@ -216,19 +216,19 @@ There are 4 different types of instructions:
 
 
 218                                                                            4
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
-   
+
 ## --{ REGISTER SELECTION }-------------------------------------------------- ##
 
 The 64 processor registers can be selected by a 6 bit value.
 
     Value   | Short | Description
     -----   | ----- | -----------
-    0x00    | R00   | 
+    0x00    | R00   |
      to     |       | General purpose registers 0 to 45
-    0x2D    | R45   | 
+    0x2D    | R45   |
     0x2E    | RA    | Operand A Register
     0x2F    | RB    | Operand B Register
     0x30    | RX    | Extend register
@@ -271,13 +271,13 @@ The 64 processor registers can be selected by a 6 bit value.
 
 
 273                                                                            5
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
-   
+
 ## --{ OPCODES }------------------------------------------------------------- ##
 
-Every OpCode has a fixed length of 5 bit. 
+Every OpCode has a fixed length of 5 bit.
 
     Value | Name        | Description
     ----- | ----        | -----------
@@ -287,22 +287,22 @@ Every OpCode has a fixed length of 5 bit.
     0x03  | CPR a   d   | Copy  `(a)` to `(d)`.
     0x04  | SET     d c | Set   `(d)` to `c`.
     0x05  | BIT a   d c | Copy `(a)` to `(d)` but (re-)set bit `c & 0x1F` to `c & 0x20`.
-    0x06  | ADD a b d   | Sets `(d)` to `(a) + (b)`. 
-          |             |   Clears and sets SR(Z;T;V;C) 
-    0x07  | SUB a b d   | Sets `(d)` to `(a) - (b)`. 
-          |             |   Clears and sets SR(Z;T;U;C) 
+    0x06  | ADD a b d   | Sets `(d)` to `(a) + (b)`.
+          |             |   Clears and sets SR(Z;T;V;C)
+    0x07  | SUB a b d   | Sets `(d)` to `(a) - (b)`.
+          |             |   Clears and sets SR(Z;T;U;C)
     0x08  | LSL a b d   | Sets `(d)` to `(a) << (b)`  (logical shift).
-          |             |   Clears and sets SR(Z;T;C) 
+          |             |   Clears and sets SR(Z;T;C)
     0x09  | LSR a b d   | Sets `(d)` to `(a) >> (b)`  (logical shift).
-          |             |   Clears and sets SR(Z;T;C) 
-    0x0A  | AND a b d   | Sets `(d)` to `(a) & (b)` (logical AND). 
-          |             |   Clears and sets SR(Z;T) 
-    0x0B  | OR  a b d   | Sets `(d)` to `(a) | (b)` (logical OR). 
-          |             |   Clears and sets SR(Z;T) 
-    0x0C  | XOR a b d   | Sets `(d)` to `(a) ^ (b)` (logical XOR). 
-          |             |   Clears and sets SR(Z;T) 
+          |             |   Clears and sets SR(Z;T;C)
+    0x0A  | AND a b d   | Sets `(d)` to `(a) & (b)` (logical AND).
+          |             |   Clears and sets SR(Z;T)
+    0x0B  | OR  a b d   | Sets `(d)` to `(a) | (b)` (logical OR).
+          |             |   Clears and sets SR(Z;T)
+    0x0C  | XOR a b d   | Sets `(d)` to `(a) ^ (b)` (logical XOR).
+          |             |   Clears and sets SR(Z;T)
     0x0D  | NOT a   d   | Sets `(d)` to `!(a)`      (logical NOT).
-          |             |   Clears and sets SR(Z;T) 
+          |             |   Clears and sets SR(Z;T)
     0x0E  | CMP a b     | Compares `(a)` and `(b)` and set the flags in SR.
           |             |   Clears and sets SR(Z;T;G;L;E)
     0x0F  | BRA a       | Branch to (a) if SR(Z) is set.
@@ -311,9 +311,9 @@ Every OpCode has a fixed length of 5 bit.
           |             |   Takes `(b)` Cycles
     0x12  | EMR a b d   | Read  `(b)` words from block `[a]` on EM to `(d)`.
           |             |   Takes `(b)` Cycles
-    0x13  |             | 
+    0x13  |             |
      to   |             | Reconfigurable
-    0x1E  |             | 
+    0x1E  |             |
     0x1F  | HLT         | Halt the CPU, stop all operations
     [OpCodes]
 
@@ -326,16 +326,16 @@ Every OpCode has a fixed length of 5 bit.
 
 
 328                                                                            6
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
-   
+
 # ==[ MEMORY ]================================================================ #
 
 The memory is organised in four main blocks.
 
-1. Block: DMA Area, 
-      Basic operating system, 
+1. Block: DMA Area,
+      Basic operating system,
       hardware addresses and interrupt handling
 2. Block: Mixed (user) programm an data memory
 3. Block: Stack
@@ -356,7 +356,7 @@ Diagramm:
     .                    .
     +--------------------+ (SP)
     .                    .
-    .                    . 
+    .                    .
     .     ^_^_^_^_^_^    .
     |                    |
     |        Stack       |
@@ -367,10 +367,10 @@ Diagramm:
     |                    |
     +--------------------+ 0x7FFFFF
 
-Every WORD in the memory has a length of 24 bit, but only the first 23 bits can 
-be written by the software. 
-The first bit can only written while programming to prevent execution of data 
-as a command word.        
+Every WORD in the memory has a length of 24 bit, but only the first 23 bits can
+be written by the software.
+The first bit can only written while programming to prevent execution of data
+as a command word.
 
 
 
@@ -381,12 +381,12 @@ as a command word.
 
 
 383                                                                            7
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 ## --{ DMA & SPECIAL PURPOSE ADDRESSES }------------------------------------- ##
 
-Inside the Basic OS Block (BOB), the first few words are reserved for special 
+Inside the Basic OS Block (BOB), the first few words are reserved for special
 DMA hardware.
 
     Address (range)     | RW | Ext | Purpose
@@ -436,8 +436,8 @@ External access on a DMA Address will trigger the corresponding Interrupt.
 
 
 438                                                                            8
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 
 # ==[ INTERRUPT HANDLING ]==================================================== #
@@ -446,10 +446,10 @@ The IM, IV, IS, IR and IH registers control the interrupt handling.
 Individual interrupts can be activated through setting the bits in IM, whereby
 1 means interrupt is enabled.
 
-If the destination register of the current instruction is RX, then the 
+If the destination register of the current instruction is RX, then the
 interrupt will be stalled for one cycle.
 If SR(I) is set:
-    - PC will be copied into IR 
+    - PC will be copied into IR
     - IH will be set to the corresponding interrupt vector (0x00000B - 22)
 
     BIT SR SR #0x0E  % Reset Interrupt-Flag in SR
@@ -468,41 +468,41 @@ If SR(I) is set:
     ----------- | -------- | -------- | --------- | -----------
      0x00000B   | 0x000024 | 0x000001 |           | Reset Interrupt
      0x00000C   | 0x000025 | 0x000002 |  Write    | Timer Interrupt
-     0x00000D   | 0x000026 | 0x000004 |           | 
+     0x00000D   | 0x000026 | 0x000004 |           |
      0x00000E   | 0x000027 | 0x000008 |  Write    | Keyboard Interrupt
      0x00000F   | 0x000028 | 0x000010 |  Write    | Mouse Interrupt
      0x000010   | 0x000029 | 0x000020 |  Read     | UART TX Interrupt
      0x000011   | 0x00002A | 0x000040 |  Write    | UART RX Interrupt
-     0x000012   | 0x00002B | 0x000080 |           | 
-     0x000013   | 0x00002C | 0x000100 |           | 
-     0x000014   | 0x00002D | 0x000200 |           | 
-     0x000015   | 0x00002E | 0x000400 |           | 
-     0x000016   | 0x00002F | 0x000800 |           | 
-     0x000017   | 0x000030 | 0x001000 |           | 
-     0x000018   | 0x000031 | 0x002000 |           | 
-     0x000019   | 0x000032 | 0x004000 |           | 
-     0x00001A   | 0x000033 | 0x008000 |           | 
-     0x00001B   | 0x000034 | 0x010000 |           | 
-     0x00001C   | 0x000035 | 0x020000 |           | 
-     0x00001D   | 0x000036 | 0x040000 |           | 
-     0x00001E   | 0x000037 | 0x080000 |           | 
-     0x00001F   | 0x000038 | 0x100000 |           | 
-     0x000020   | 0x000039 | 0x200000 |           | 
-     0x000021   | 0x00003A | 0x400000 |           | 
+     0x000012   | 0x00002B | 0x000080 |           |
+     0x000013   | 0x00002C | 0x000100 |           |
+     0x000014   | 0x00002D | 0x000200 |           |
+     0x000015   | 0x00002E | 0x000400 |           |
+     0x000016   | 0x00002F | 0x000800 |           |
+     0x000017   | 0x000030 | 0x001000 |           |
+     0x000018   | 0x000031 | 0x002000 |           |
+     0x000019   | 0x000032 | 0x004000 |           |
+     0x00001A   | 0x000033 | 0x008000 |           |
+     0x00001B   | 0x000034 | 0x010000 |           |
+     0x00001C   | 0x000035 | 0x020000 |           |
+     0x00001D   | 0x000036 | 0x040000 |           |
+     0x00001E   | 0x000037 | 0x080000 |           |
+     0x00001F   | 0x000038 | 0x100000 |           |
+     0x000020   | 0x000039 | 0x200000 |           |
+     0x000021   | 0x00003A | 0x400000 |           |
 
 493                                                                            9
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
-   
+
 # ==[ DEBUG INTERFACE ]======================================================= #
 
-CPU23LS features a sophisticated debugging interface integrated deeply into the 
-core of the CPU. Communication with the outside world is archived over a UART 
+CPU23LS features a sophisticated debugging interface integrated deeply into the
+core of the CPU. Communication with the outside world is archived over a UART
 connection.
 
-It is possible to read and write all registers and the memory, therefore 
-controlling the whole CPU through the interface. If needed, the instructions 
+It is possible to read and write all registers and the memory, therefore
+controlling the whole CPU through the interface. If needed, the instructions
 can be single stepped.
 
 The Debug interface controls the CPU through controlling the clock.
@@ -510,8 +510,8 @@ The Debug interface controls the CPU through controlling the clock.
 
 ## --{ DEBUG COMMUNICATION PROTOCOL }---------------------------------------- ##
 
-The communication protocol is packet based, whereby a packet is one word 
-containing a debug instruction in minimum. Additional words with payload data 
+The communication protocol is packet based, whereby a packet is one word
+containing a debug instruction in minimum. Additional words with payload data
 may follow in consequential words.
 
 
@@ -524,7 +524,7 @@ may follow in consequential words.
     0x04  | 3    | Memory write       | Starting Address, Value, ...
     0x05  | 2    | Breakpoints        | Address
     0x06  | 3    | Register Watchdog  | Register, Value
-    0x07  |      |                    | 
+    0x07  |      |                    |
     [Debug Instructions]
 
 
@@ -546,8 +546,8 @@ may follow in consequential words.
 
 
 548                                                                           10
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 # ==[ TIMER ]================================================================= #
 
@@ -601,19 +601,19 @@ may follow in consequential words.
 
 
 603                                                                           11
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 # ==[ DISPLAY ]=============================================================== #
 
 The CPU23 has an integrated text display driver.
-An integrated VGA controller supports a fixed resolution of 640x480 pixels with 
+An integrated VGA controller supports a fixed resolution of 640x480 pixels with
 a color depth of 12-Bit per pixel.
 
-Every character has a dimension of 8x16 resulting in a display size of 80x30 
+Every character has a dimension of 8x16 resulting in a display size of 80x30
 characters.
 
-One WORD of display memory is split in four parts. The leftmost 7-bits define 
+One WORD of display memory is split in four parts. The leftmost 7-bits define
 the character. Bits 15 to 22 define the back- and foreground color.
 The colors are defined by a 16 element palette.
 
@@ -628,13 +628,13 @@ The character set is ASCII compatible.
 
        | _0  _1  _2  _3  _4  _5  _6  _7  _8  _9  _A  _B  _C  _D  _E  _F
     ---+---------------------------------------------------------------
-    0_ |                         not used
-    1_ |                         not used
-    2_ | SP  !   "   #   $   %   &   '   (   )   *   +   ,   -   .   / 
-    3_ | 0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ? 
-    4_ | @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O 
-    5_ | P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _ 
-    6_ | `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o 
+    0_ |     ↑   ↓   ←   →               ⌫  ↹  ↵
+    1_ |    INS DEL HOM END PgU PgD                 ESC
+    2_ | SP  !   "   #   $   %   &   '   (   )   *   +   ,   -   .   /
+    3_ | 0   1   2   3   4   5   6   7   8   9   :   ;   <   =   >   ?
+    4_ | @   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+    5_ | P   Q   R   S   T   U   V   W   X   Y   Z   [   \   ]   ^   _
+    6_ | `   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o
     7_ | p   q   r   s   t   u   v   w   x   y   z   {   |   }   ~  DEL
 
 ## --{ COLORS }-------------------------------------------------------------- ##
@@ -656,8 +656,8 @@ The character set is ASCII compatible.
 
 
 658                                                                           12
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 
 # ==[ VHDL-MODULES ]========================================================== #
@@ -682,10 +682,10 @@ The character set is ASCII compatible.
       - Keyboard
       - Mouse
     - UART
-  - 
-  - 
-  - 
-  - 
+  -
+  -
+  -
+  -
 
 
 
@@ -711,8 +711,8 @@ The character set is ASCII compatible.
 
 
 713                                                                           13
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 
                                    NOTES
@@ -766,8 +766,8 @@ The character set is ASCII compatible.
 
 
 768                                                                           14
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----    
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 
                                    NOTES
@@ -821,4 +821,4 @@ The character set is ASCII compatible.
 
 
 823                                                                           15
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----   
+   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
