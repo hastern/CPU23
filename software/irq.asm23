@@ -1,4 +1,4 @@
-	ORG 0x00003B
+    ORG 0x00003B
 % offset 0x00003B - 0x000040  Basic Interrupt handling routine
 :IRQ    BIT SR SR #0xE   % Reset Interrupt-Flag in SR
         SET IS #0x23     % Set constant interrupt selection address

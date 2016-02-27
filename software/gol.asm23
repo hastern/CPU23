@@ -1,0 +1,157 @@
+% Game of Life in ASM23
+% Author: Hanno Sternberg <hanno@almostintelligent.de>
+% License: MIT
+%
+
+        INC base.asm23
+
+ORG 0x00000B
+% offset 0x00000B - 0x000022  Interrupt vectors
+:IRQRST @init     % Reset Interrupt
+:IRQTIM #0x000000 % Timer Interrupt
+        #0x000000
+:IRQKEY @keyISR   % Keyboard Interrupt
+:IRQMOU #0x000000 % Mouse Interrupt
+:IRQUTX #0x000000 % UART TX Interrupt
+:IRQURX #0x000000 % UART RX Interrupt
+
+        INC dma.asm23 % include DMA addressess
+        INC irq.asm23 % include Interrupts
+
+% offset 0x000042: Here be programs
+        ORG 0x000042
+% Initialize everything
+% 2 Screen Buffer @7FE200 and @7FEC00
+%
+        NAME R42 Screen     % The currently displayed screen
+        NAME R40 Screen1    % The first buffer
+        NAME R41 Screen2    % The second buffer
+        NAME R44 BGColor
+        NAME R45 FGColor
+:init   SET BP #0x7FE200 % Set Base Pointer downward to make room for
+                         % both screen buffers
+        % SET DB #0x7FEC00
+        SET $Screen1 #0xDFF
+        BIT $Screen1 $Screen1 #0x2C % Set Bit 12 -> 0x1DFF
+        NOT $Screen1 $Screen1       % -> 0x7FE200
+        SET $Screen2 #0x3FF
+        BIT $Screen2 $Screen2 #0x2C % Set Bit 12 -> 0x13FF
+        NOT $Screen2 $Screen2       % -> 0x7FEC00
+        CPR $Screen1 $Screen
+        % Color -> Bright white
+        SET $FGColor #0x2
+        LSL $FGColor #19 $FGColor
+        SET $BGColor #0x2
+        LSL $BGColor #15 $BGColor
+        BIT IM IM #0x23  % Active keyboard interrupts
+        JMP @create
+
+% Main loop
+:main JMP @main
+
+% Move around the field
+        NAME R20 LastKey
+        NAME R21 CursorAddr
+:create CPR DM $CursorAddr
+        OR #0x5F $BGColor RX
+        STR RX $CursorAddr
+:move   NOP
+        NOP
+        NOP
+        CMP $LastKey #1
+        BRA @up
+        CMP $LastKey #2
+        BRA @down
+        CMP $LastKey #3
+        BRA @left
+        CMP $LastKey #4
+        BRA @right
+        CMP $LastKey #0x20  % Space
+        BRA @space
+        JMP @move
+% Up Arrow Key
+:up     SET $LastKey #0
+        STR #0x20 $CursorAddr
+        SUB $CursorAddr #80 $CursorAddr
+        OR #0x5F $BGColor RX
+        STR RX $CursorAddr
+        JMP @move
+% Down Arrow Key
+:down   SET $LastKey #0
+        STR #0x20 $CursorAddr
+        ADD $CursorAddr #80 $CursorAddr
+        OR #0x5F $BGColor RX
+        STR RX $CursorAddr
+        JMP @move
+% Left Arrow Key
+:left   SET $LastKey #0
+        STR #0x20 $CursorAddr
+        SUB $CursorAddr #1 $CursorAddr
+        OR #0x5F $BGColor RX
+        STR RX $CursorAddr
+        JMP @move
+% Right Arrow Key
+:right  SET $LastKey #0
+        STR #0x20 $CursorAddr
+        ADD $CursorAddr #1 $CursorAddr
+        OR #0x5F $BGColor RX
+        STR RX $CursorAddr
+        JMP @move
+% Space Key
+:space  SET $LastKey #0
+        OR #0x40 $FGColor RX
+        STR RX $CursorAddr
+        ADD $CursorAddr #1 $CursorAddr
+        OR #0x5F $BGColor RX
+        STR RX $CursorAddr
+        JMP @move
+        HLT
+
+% Game of Life: Iterate all cells
+%
+        NAME R1 CellAddr
+        NAME R2 CellX
+        NAME R3 CellY
+        NAME R4 CellValue
+:gol    CMP $Screen $Screen1
+        BRA @scr2
+        % Select Screen Buffer 1
+        CPR $Screen1 $CellAddr
+        CPR $Screen2 DB
+        CPR $Screen2 $Screen
+        BRA @scrsel
+        % Select Screen Buffer 2
+:scr2   CPR $Screen2 $CellAddr
+        CPR $Screen1 DB
+        CPR $Screen1 $Screen
+:scrsel NOP
+        SET $CellX #0
+% for field_x in (0..79)
+:for_x  SET $CellY #0
+% for field_y in (0..29)
+:for_y  LDR $CellAddr $CellValue    % Value of the current cell
+        % northwest
+        % north
+        % northeast
+        % east
+        % southeast
+        % south
+        % southwest
+        % west
+        ADD #1 $CellAddr $CellAddr  % Select next cell
+        ADD #1 R2 R2
+        CMP R2 #30
+        BRA @end_y
+        JMP @for_y
+:end_y  ADD #1 R1 R1
+        CMP R1 #80
+        BRA @end_x
+        JMP @for_x
+:end_x  NOP
+        HLT
+
+% Keyboard Interrupt
+:keyISR LDR @DMAKEY $LastKey
+        JMP IR % Return to normal program
+% Should never get here
+        HLT
