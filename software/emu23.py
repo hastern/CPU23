@@ -263,7 +263,7 @@ class Memory(object):
         if all(itertools.starmap(operator.eq, zip(magic, [0x23, 0xC0, 0xDE]))):
             raise InvalidHexFileError()
         raw = fHnd.read(3)
-        length = (ord(raw[0]) << 16) + (ord(raw[1]) << 16) + (ord(raw[2]) << 0)
+        length = (ord(raw[0]) << 16) + (ord(raw[1]) << 8) + (ord(raw[2]) << 0)
         for offset in xrange(length):
             raw = fHnd.read(3)
             word = (ord(raw[0]) << 16) + (ord(raw[1]) << 8) + (ord(raw[2]) << 0)
