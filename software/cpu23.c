@@ -34,10 +34,10 @@ char * opCodeToString(OpCode o) {
         case 0x0D: return "NOT";
         case 0x0E: return "CMP";
         case 0x0F: return "BRA";
-        case 0x0F: return "BNE";
-        case 0x10: return "JMP";
-        case 0x11: return "EMW";
-        case 0x12: return "EMR";
+        case 0x10: return "BNE";
+        case 0x11: return "JMP";
+        case 0x12: return "EMW";
+        case 0x13: return "EMR";
         case 0x1F: return "HLT";
         default: return NULL;
     }
@@ -305,7 +305,7 @@ int parseConstant(char ** line, Constant * cnst) {
     return 1;
 }
 
-int parseLine(char * line, Instruction * cmd) {
+int parseLine(char * line, Instruction * cmd, unsigned int line_count) {
     assert(line != NULL);
     {
         OpCode op = NOP;
@@ -354,7 +354,7 @@ int parseLine(char * line, Instruction * cmd) {
                         break;
                 }
             } else {
-                fprintf(stderr, "Failed to parse: '%s'\n", line);
+                fprintf(stderr, "[%d] Failed to parse: '%s'\n", line_count, line);
                 cmd = NULL;
             }
         }
@@ -376,12 +376,13 @@ int parseFile(char * fname, HexFile * hf) {
     if (fHnd != NULL) {
         char buf[BUFFERSIZE+1] = {0};
         char * buf_p = &(buf[0]);
+        unsigned int line_count = 1;
         while (!feof(fHnd) && !err) {
             *buf_p = fgetc(fHnd);
             if (*buf_p == '\n') {
                 Instruction c;
                 *buf_p = '\0';
-                if (parseLine(&(buf[0]), &c)) {
+                if (parseLine(&(buf[0]), &c, line_count++)) {
                     err = addInstrToHexFile(hf, c);
                 }
                 buf_p = &(buf[0]);

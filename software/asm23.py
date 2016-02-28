@@ -278,6 +278,8 @@ class A23Parser(object):
         label, instr = toks
         lbl = Label(label[0]) if len(label) == 1 else None
 
+        source_line = "% {}[{:d}] {}".format(self.filename, no, line.strip())
+
         if instr[0] == "CONST":
             self.ast.append(CodeObject(lbl, Constant(instr[1])))
         elif instr[0] == "ADDRS":
@@ -286,9 +288,9 @@ class A23Parser(object):
             if instr[1] in Operation.Names:
                 op = Operation(instr[1])
                 args = [classFromName(t, v, d) for t, v, d in instr[2]] if len(instr) > 2 else []
-                self.ast.append(CodeObject(lbl, Instruction(op, *args), source=line.strip()))
+                self.ast.append(CodeObject(lbl, Instruction(op, *args), source=source_line))
             else:
-                self.ast.append(CodeObject(lbl, Instruction(Operation(instr[1]), *instr[2]), source=line.strip()))
+                self.ast.append(CodeObject(lbl, Instruction(Operation(instr[1]), *instr[2]), source=source_line))
 
     def parse(self, code):
         try:
@@ -377,7 +379,7 @@ class A23Parser(object):
                 for i in range(diff):
                     fHnd.write("#0x000000 %{}\n".format(i))
             if obj.source is not None and len(obj.source) > 0:
-                fHnd.write("% {}\n".format(obj.source))
+                fHnd.write("{}\n".format(obj.source))
             fHnd.write("{}\n".format(str(obj.instr)))
             last = obj
         fHnd.close()
