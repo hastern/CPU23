@@ -188,7 +188,7 @@ class A23Syntax(object):
     RegX = Group((Addrs ^ Register ^ Name).setParseAction(lambda toks: toks.append("RX")))
     RA_A = Group((Addrs ^ Register ^ Name).setParseAction(lambda toks: toks.append("RA")))
     Reg  = Group((Register ^ Name) + Group(Empty()))
-    Cst  = Group(Const + Group(Empty()))
+    Cst  = Group((Const ^ Addrs) + Group(Empty()))
 
     Instr = (Literal("NOP") \
              | (Literal("LDR") + Group(RegX + Reg)) \
