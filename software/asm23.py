@@ -295,7 +295,8 @@ class A23Parser(object):
             for nr, line in enumerate(code):
                 self.parseLine(line, nr)
         except ParseException as e:
-            sys.stderr.write("{}[{}]: ".format(self.filename, nr, line) + str(e) + "\n")
+            sys.stderr.write("Can't parse {}[{}]: {}\n".format(self.filename, nr, line))
+            return False
         return self.ast
 
     def expandOperations(self):
@@ -423,13 +424,18 @@ if __name__ == "__main__" and not sys.flags.interactive:
     inputfile = opts['input']
 
     p = A23Parser()
-    p.read(inputfile)
-    p.expandOperations()
-    p.calcAddressess()
-    p.resolve()
-    if opts['assemble']:
-        outputfile = opts['output'] if opts['output'] is not None else (os.path.splitext(inputfile)[0] + ".hex")
-        p.assemble(outputfile)
+    if p.read(inputfile):
+        sys.stderr.write("Read {} lines of code\n".format(len(p.ast)))
+        p.expandOperations()
+        sys.stderr.write("Expanded to {} lines of code\n".format(len(p.ast)))
+        p.calcAddressess()
+        sys.stderr.write("Calculating addresses\n")
+        p.resolve()
+        if opts['assemble']:
+            outputfile = opts['output'] if opts['output'] is not None else (os.path.splitext(inputfile)[0] + ".hex")
+            p.assemble(outputfile)
+        else:
+            outputfile = opts['output'] if opts['output'] is not None else (os.path.splitext(inputfile)[0] + ".a23")
+            p.save(outputfile)
     else:
-        outputfile = opts['output'] if opts['output'] is not None else (os.path.splitext(inputfile)[0] + ".a23")
-        p.save(outputfile)
+        sys.stderr.write("Aborting\n")
