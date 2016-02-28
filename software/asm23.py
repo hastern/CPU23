@@ -267,9 +267,6 @@ class A23Parser(object):
         fHnd.close()
         return ast
 
-    def addInstr(self, label, instr):
-        self.ast.append(CodeObject(label, instr))
-
     @property
     def isValid(self):
         return all(map(lambda o: o.isConstant, self.ast))
@@ -282,16 +279,16 @@ class A23Parser(object):
         lbl = Label(label[0]) if len(label) == 1 else None
 
         if instr[0] == "CONST":
-            self.addInstr(lbl, Constant(instr[1]))
+            self.ast.append(CodeObject(lbl, Constant(instr[1])))
         elif instr[0] == "ADDRS":
-            self.addInstr(lbl, Address(instr[1]))
+            self.ast.append(CodeObject(lbl, Address(instr[1])))
         elif instr[0] == "INSTR":
             if instr[1] in Operation.Names:
                 op = Operation(instr[1])
                 args = [classFromName(t, v, d) for t, v, d in instr[2]] if len(instr) > 2 else []
-                self.addInstr(lbl, Instruction(op, *args))
+                self.ast.append(CodeObject(lbl, Instruction(op, *args), source=line.strip()))
             else:
-                self.addInstr(lbl, Instruction(Operation(instr[1]), *instr[2]))
+                self.ast.append(CodeObject(lbl, Instruction(Operation(instr[1]), *instr[2]), source=line.strip()))
 
     def parse(self, code):
         try:
@@ -315,19 +312,21 @@ class A23Parser(object):
                 for i in range(len(obj.instr.args)):
                     arg = obj.instr.args[i]
                     if isinstance(arg, Constant) and arg.buf != "":
-                        ast.append(CodeObject(lbl, Instruction(Operation("SET"), Register(arg.buf), Constant(arg.val))))
+                        ast.append(CodeObject(lbl, Instruction(Operation("SET"), Register(arg.buf), Constant(arg.val)), source=obj.source))
                         lbl = ""
                         obj.instr.args[i] = Register(arg.buf)
-                    if isinstance(arg, Variable):
-                        if arg.buf != "RX":
-                            ast.append(CodeObject(lbl, Instruction(Operation("SET"), Register("RX"), Address(arg.val))))
-                            lbl = ""
-                            ast.append(CodeObject(lbl, Instruction(Operation("LDR"), Register("RX"), Register(arg.buf))))
-                            obj.instr.args[i] = Register(arg.buf)
-                    if isinstance(arg, Address):
-                        ast.append(CodeObject(lbl, Instruction(Operation("SET"), Register("RX"), Address(arg.val))))
+                        obj.source = ""
+                    if isinstance(arg, Variable) and arg.buf != "RX":
+                        ast.append(CodeObject(lbl, Instruction(Operation("SET"), Register("RX"), Address(arg.val)), source=obj.source))
+                        lbl = ""
+                        ast.append(CodeObject(lbl, Instruction(Operation("LDR"), Register("RX"), Register(arg.buf))))
+                        obj.instr.args[i] = Register(arg.buf)
+                        obj.source = ""
+                    if isinstance(arg, Address) and obj.instr.opcode.name != "SET":
+                        ast.append(CodeObject(lbl, Instruction(Operation("SET"), Register("RX"), Address(arg.val)), source=obj.source))
                         lbl = ""
                         obj.instr.args[i] = Register("RX")
+                        obj.source = ""
                     if isinstance(arg, Name):
                         obj.instr.args[i] = Register(self.names[arg.val])
                 obj.label = lbl
@@ -362,9 +361,9 @@ class A23Parser(object):
                 out.append(CodeObject(obj.label, Constant(self.labelLoc[obj.instr.val]), obj.addr))
             elif isinstance(obj.instr, Instruction):
                 obj.instr.args = [Constant(self.labelLoc[arg.val]) if isinstance(arg, Address) else arg for arg in obj.instr.args]
-                out.append(CodeObject(obj.label, obj.instr, obj.addr))
+                out.append(CodeObject(obj.label, obj.instr, obj.addr, obj.source))
             else:
-                out.append(CodeObject(obj.label, obj.instr, obj.addr))
+                out.append(CodeObject(obj.label, obj.instr, obj.addr, obj.source))
         self.ast = out
         return self
 
@@ -376,8 +375,9 @@ class A23Parser(object):
                 diff = (obj.addr - 1) - last.addr
                 for i in range(diff):
                     fHnd.write("#0x000000 %{}\n".format(i))
-            fHnd.write(str(obj.instr))
-            fHnd.write("\n")
+            if obj.source is not None and len(obj.source) > 0:
+                fHnd.write("% {}\n".format(obj.source))
+            fHnd.write("{}\n".format(str(obj.instr)))
             last = obj
         fHnd.close()
 
