@@ -34,6 +34,7 @@ char * opCodeToString(OpCode o) {
         case 0x0D: return "NOT";
         case 0x0E: return "CMP";
         case 0x0F: return "BRA";
+        case 0x0F: return "BNE";
         case 0x10: return "JMP";
         case 0x11: return "EMW";
         case 0x12: return "EMR";

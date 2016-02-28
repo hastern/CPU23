@@ -89,10 +89,10 @@ class Operation(object):
     Names = [
         "NOP", "LDR", "STR", "CPR", "SET", "BIT",
         "ADD", "SUB", "LSL", "LSR", "AND", "OR",
-        "XOR", "NOT", "CMP", "BRA", "JMP", "EMW",
-        "EMR", "RC0", "RC1", "RC2", "RC3", "RC4",
-        "RC5", "RC6", "RC7", "RC8", "RC9", "RCA",
-        "RCB", "HLT",
+        "XOR", "NOT", "CMP", "BRA", "BNE", "JMP",
+        "EMW", "EMR", "RC0", "RC1", "RC2", "RC3",
+        "RC4", "RC5", "RC6", "RC7", "RC8", "RC9",
+        "RCA", "HLT",
     ]
 
     def __init__(self, name):
@@ -206,6 +206,7 @@ class A23Syntax(object):
              | (Literal("NOT") + Group(RegA + RegX)) \
              | (Literal("CMP") + Group(RegA + RegB)) \
              | (Literal("BRA") + Group(RA_A)) \
+             | (Literal("BNE") + Group(RA_A)) \
              | (Literal("JMP") + Group(RA_A)) \
              | (Literal("EMW") + Group(RegA + RegB + RegX)) \
              | (Literal("EMR") + Group(RegA + RegB + RegX)) \

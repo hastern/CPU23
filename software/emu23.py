@@ -314,7 +314,7 @@ class Instruction(object):
              0x04: "SET", 0x05: "BIT", 0x06: "ADD", 0x07: "SUB",
              0x08: "LSL", 0x09: "LSR", 0x0A: "AND", 0x0B: "OR",
              0x0C: "XOR", 0x0D: "NOT", 0x0E: "CMP", 0x0F: "BRA",
-             0x10: "JMP", 0x11: "EMW", 0x12: "EMR",
+             0x10: "BNE", 0x11: "JMP", 0x12: "EMW", 0x13: "EMR",
              0x1F: "HLT",
              }
     RegisterUsage = [
@@ -334,6 +334,7 @@ class Instruction(object):
         (True, False, True, False, TypeAD),  # NOT
         (True, True, False, False, TypeABD),  # CMP
         (True, False, False, False, TypeAC),  # BRA
+        (True, False, False, False, TypeAC),  # BNE
         (True, False, False, False, TypeAC),  # JMP
         (True, True, True, False, TypeABD),  # EMW
         (True, True, True, False, TypeABD),  # EMR
@@ -348,7 +349,6 @@ class Instruction(object):
         (False, False, False, False, TypeABD),  # RC8
         (False, False, False, False, TypeABD),  # RC9
         (False, False, False, False, TypeABD),  # RCA
-        (False, False, False, False, TypeABD),  # RCB
         (False, False, False, False, TypeZ)     # HLT
     ]
 
@@ -444,6 +444,7 @@ class Emu23(object):
             lambda a, d: d.set(self.unaryOperation(a.get(), operator.inv, (1 << StatusBits.True_) | (1 << StatusBits.Zero))),  # NOT
             self.compare,  # CMP
             self.branch,  # BRA
+            self.branch_not_equal,  # BNE
             self.jump,  # JMP
             lambda: None,  # EMW
             lambda: None,  # EMR
@@ -458,7 +459,6 @@ class Emu23(object):
             lambda: None,  # 0x1B
             lambda: None,  # 0x1C
             lambda: None,  # 0x1D
-            lambda: None,  # 0x1E
             self.halt,  # HLT
         ]
         self.memory = Memory()
@@ -522,6 +522,11 @@ class Emu23(object):
 
     def branch(self, a):
         if ((self.registers[Register.SR].get() >> StatusBits.Zero) & 0x1) == 1:
+            return self.jump(a)
+        return None
+
+    def branch_not_equal(self, a):
+        if ((self.registers[Register.SR].get() >> StatusBits.Zero) & 0x1) == 0:
             return self.jump(a)
         return None
 

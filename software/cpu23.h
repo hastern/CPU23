@@ -15,7 +15,7 @@ enum e_OpCode {
     SET = 0x04, BIT = 0x05, ADD = 0x06, SUB = 0x07,
     LSL = 0x08, LSR = 0x09, AND = 0x0A, OR  = 0x0B,
     XOR = 0x0C, NOT = 0x0D, CMP = 0x0E, BRA = 0x0F,
-    JMP = 0x10, EMW = 0x11, EMR = 0x12,
+    BNE = 0x10, JMP = 0x11, EMW = 0x12, EMR = 0x13,
     HLT = 0x1F
 };
 typedef unsigned OpCode;
@@ -114,6 +114,7 @@ static RegisterUse RegisterUseTable[] = {
     /* NOT = */ {1, 0, 1, 0},
     /* CMP = */ {1, 1, 0, 0},
     /* BRA = */ {1, 0, 0, 0},
+    /* BNE = */ {1, 0, 0, 0},
     /* JMP = */ {1, 0, 0, 0},
     /* EMW = */ {1, 0, 1, 1},
     /* EMR = */ {1, 0, 1, 1},
@@ -128,7 +129,6 @@ static RegisterUse RegisterUseTable[] = {
     /* 0x1B= */ {0, 0, 0, 0},
     /* 0x1C= */ {0, 0, 0, 0},
     /* 0x1D= */ {0, 0, 0, 0},
-    /* 0x1E= */ {0, 0, 0, 0},
     /* HLT = */ {0, 0, 0, 0}
 };
 
@@ -150,6 +150,7 @@ static int InstructionTypeTable[] = {
     /* NOT = */ 2,
     /* CMP = */ 3,
     /* BRA = */ 0,
+    /* BNE = */ 0,
     /* JMP = */ 0,
     /* EMW = */ 2,
     /* EMR = */ 2,
@@ -164,7 +165,6 @@ static int InstructionTypeTable[] = {
     /* 0x1B= */ 3,
     /* 0x1C= */ 3,
     /* 0x1D= */ 3,
-    /* 0x1E= */ 3,
     /* HLT = */ 4
 };
 

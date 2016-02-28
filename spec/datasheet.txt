@@ -306,17 +306,17 @@ Every OpCode has a fixed length of 5 bit.
     0x0E  | CMP a b     | Compares `(a)` and `(b)` and set the flags in SR.
           |             |   Clears and sets SR(Z;T;G;L;E)
     0x0F  | BRA a       | Branch to (a) if SR(Z) is set.
-    0x10  | JMP a       | Unconditional jump to `(a)`.
-    0x11  | EMW a b d   | Write `(b)` words `(a)` to block `[d]` on EM.
+    0x10  | BNE a       | Branch to (a) if SR(Z) is not set.
+    0x11  | JMP a       | Unconditional jump to `(a)`.
+    0x12  | EMW a b d   | Write `(b)` words `(a)` to block `[d]` on EM.
           |             |   Takes `(b)` Cycles
-    0x12  | EMR a b d   | Read  `(b)` words from block `[a]` on EM to `(d)`.
+    0x13  | EMR a b d   | Read  `(b)` words from block `[a]` on EM to `(d)`.
           |             |   Takes `(b)` Cycles
-    0x13  |             |
+    0x14  |             |
      to   |             | Reconfigurable
     0x1E  |             |
     0x1F  | HLT         | Halt the CPU, stop all operations
     [OpCodes]
-
 
 
 
