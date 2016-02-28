@@ -51,6 +51,8 @@ class _GetchWindows:
     def __call__(self):
         import msvcrt
         ch = msvcrt.getch()
+        if ch in ['\r', '\n']:
+            return ord('\n')
         if ch == '\xe0':
             ch = msvcrt.getch()
             if ch == 'H':  # Up Arrow
