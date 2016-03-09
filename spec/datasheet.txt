@@ -42,8 +42,8 @@
       |                                                              |
       | by                                                           |
       |     Hanno Sternberg [hanno@almostintelligent.de]             |
-      |     Thomas Starke   [starke.thomas@yahoo.de]                 |
-      |                                              (c) 2012 - 2014 |
+      |                                                              |
+      |                                              (c) 2012 - 2016 |
       |                                                              |
       +--------------------------------------------------------------+
 
