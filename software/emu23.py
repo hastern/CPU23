@@ -550,10 +550,10 @@ class Emu23(object):
     def _run(self, filename):
         self.memory.open(filename)
         sys.stdout.write("\033[s")  # Save Cursor Position
-        self.registers[Register.DB].set(0x7FF600)
-        self.registers[Register.DM].set(0x7FF970)
-        self.registers[Register.BP].set(0x7FF600)
-        self.registers[Register.SP].set(0x7FF600)
+        self.registers[Register.DB].set(0x7FF000)
+        self.registers[Register.DM].set(0x7FF000)
+        self.registers[Register.BP].set(0x7FEFFF)
+        self.registers[Register.SP].set(0x7FEFFF)
         try:
             timer = 0
             # --- Initialize: Load Reset Address and start Programm
