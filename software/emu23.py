@@ -555,6 +555,7 @@ class Emu23(object):
         self.registers[Register.BP].set(0x7FF600)
         self.registers[Register.SP].set(0x7FF600)
         try:
+            timer = 0
             # --- Initialize: Load Reset Address and start Programm
             self.registers[Register.PC].set(self.memory.read(0) & 0x1FFFFF)
             while True:
@@ -579,6 +580,14 @@ class Emu23(object):
                     self.registers[Register.IR].set(self.registers[Register.PC].get())
                     # Set PC to basic interrupt handling routine
                     self.registers[Register.PC].set(0x00003B)
+                # --- Timer
+                timer += 1
+                pr = self.registers[Register.PR].get()
+                tr = self.registers[Register.TR].get()
+                if pr > 0 and pr >= timer:
+                    timer = 0
+                    if tr > 0:
+                        self.registers[Register.TR].set(tr - 1)
         except HaltError:
             self.display()
 
