@@ -591,11 +591,21 @@ class Emu23(object):
             ch = getch()
 
     def run(self, filename):
+        instr_count = 0
+        start = time.time()
         for word in self._run(filename):
+            instr_count += 1
             if self._emulate_display:
                 self.display()
             if self._timeout is not None:
                 time.sleep(self._timeout)
+        stop = time.time()
+        diff = stop - start
+        print "Executed {} Instructions in {:.03f} sec. ({:.01f}/sec)".format(
+            instr_count,
+            diff,
+            instr_count / diff,
+        )
 
     def _writeText(self, offset, text, color=0x70):
         for addr, char in enumerate(text, start=offset):
