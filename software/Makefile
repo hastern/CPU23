@@ -6,21 +6,23 @@
 # --------------------------------------------- #
 
 # Compiler
-CC			= gcc
+CC          = gcc
 # Linker
-LD			= $(CC)
-# Doc generator
-DOC			= doxygen
+LD          = $(CC)
 
 # Include directories
-INCLUDES	=
+INCLUDES        =
 # Compiler flags
 CFLAGS_COMMON   = -c -g -Wall -Wextra
-CFLAGS		= $(CFLAGS_COMMON) -DNDEBUG
+CFLAGS          = $(CFLAGS_COMMON) -DNDEBUG
 # Linker flags
-LDFLAGS		=
+LDFLAGS         =
 
-
+PY              = python
+PREPROCESSOR    = asm23.py
+EMULATOR        = emu23.py
+VHT_GENERATOR   = vht23.py
+EMULATOR_FLAGS  = --show-display
 
 # Source codes
 SOURCE_ASM=asm23.c cpu23.c
@@ -29,11 +31,9 @@ OBJECTS_ASM=$(SOURCE_ASM:.c=.o)
 SOURCE_DASM=dasm23.c cpu23.c
 OBJECTS_DASM=$(SOURCE_DASM:.c=.o)
 
-# Target name
-BINARY_ASM=asm23
-BINARY_DASM=dasm23
 
 .PHONY: all help clean doc rebuild doc
+.SECONDARY:
 
 default: all
 
@@ -41,47 +41,30 @@ all: $(BINARY_ASM) $(BINARY_DASM)
 
 # Compile a single file
 %.o : %.c
-	@echo ""
-	@echo "  - Building $@"
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $<
-	@echo "  ... done"
 
-# Link files to an executable
-$(BINARY_ASM): $(OBJECTS_ASM)
-	@echo ""
-	@echo "  - linking $@"
-	$(LD) $(LDFLAGS) $(OBJECTS_ASM) -o $(BINARY_ASM)
-	@echo "  ... done"
+asm23: $(OBJECTS_ASM) ## Build low level assembler
+	$(LD) $(LDFLAGS) $(OBJECTS_ASM) -o asm23
 
-# Link files to an executable
-$(BINARY_DASM): $(OBJECTS_DASM)
-	@echo ""
-	@echo "  - linking $@"
-	$(LD) $(LDFLAGS) $(OBJECTS_DASM) -o $(BINARY_DASM)
-	@echo "  ... done"
+dasm23: $(OBJECTS_DASM) ## Build Disassembler
+	$(LD) $(LDFLAGS) $(OBJECTS_DASM) -o dasm23
 
-# Clean the project
-clean:
-	@echo ""
-	@echo "  - delete object all files"
-	rm -f $(OBJECTS_ASM) $(BINARY_ASM) $(OBJECTS_DASM) $(BINARY_DASM) *~ doxygen.log
-	rm -rf doc/
-	@echo "  ... done"
+clean: ## Clean the object files
+	@rm -f $(OBJECTS_ASM) $(OBJECTS_DASM) *~
 
-doc:
-	@echo ""
-	@echo "  - creating documentation"
-	$(DOC)
-	@echo "  ... done"
+rebuild: clean all ## Make a clean build
 
-# Rebuild: Clean build
-rebuild: clean all
+%.a23: %.asm23 ## Apply the preprocessor to <FILE>
+	@$(PY) $(PREPROCESSOR) $<
 
-# Show help
-help:
-	@echo "Options:"
-	@echo "make all      - create program"
-	@echo "make clean    - clean up"
-	@echo "make doc      - create documentation"
-	@echo "make debug    - create program with DEBUG enabled"
+%.hex: %.a23 ## Assemble a program <FILE>
+	@./asm23 $< $@
 
+%.run: %.hex ## Run the program <FILE> in the emuator
+	@$(PY) $(EMULATOR) $(EMULATOR_FLAGS) $<
+
+%.vht: %.hex ## Create a Testbench to be used in Modelsim
+	@$(PY) $(VHT_GENERATOR) -O $<
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z0-9%._-]+:.*?## .*$$' Makefile | sed 's/%/<FILE>/g' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
