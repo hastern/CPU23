@@ -1,3 +1,0 @@
-[submodule "software/jelly"]
-	path = software/jelly
-	url = git@github.com:hastern/jelly.git
