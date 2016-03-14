@@ -91,9 +91,9 @@ class KeyListener(object):
         while True:
             ch = getch()
             if ch == 27:
-                self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Halt))
+                self.emulator.halt()
                 break
-            self.emulator.dma.access(3, ch)
+            self.emulator.send_key(ch)
 
 
 class StatusBits(object):
@@ -217,8 +217,9 @@ class InvalidHexFileError(Exception):
 class Memory(object):
     ChunkSize = 128
 
-    def __init__(self):
+    def __init__(self, emulator):
         self.chunks = dict()
+        self.emulator = emulator
 
     def getChunk(self, addr):
         start = addr - (addr % Memory.ChunkSize)
@@ -255,6 +256,15 @@ class Memory(object):
     def write(self, addr, val, bootload=False):
         if bootload or addr > 0x000004:
             self[addr] = val
+        # Quick and dirty UART hack
+        if addr == 0x000029 and self.emulator._wrap_uart:
+            self.emulator.dma.interrupt(5)
+            data = self.read(0x000029)
+            print "{}{}{}".format(
+                chr((data >> 16) >> 0xFF),
+                chr((data >> 8) >> 0xFF),
+                chr((data >> 0) & 0xFF)
+            ),
         return self
 
     def open(self, filename):
@@ -282,19 +292,22 @@ class DMA(object):
     def __init__(self, emulator):
         self.emulator = emulator
 
-    def access(self, addr, data):
+    def access(self, addr, data=None):
         try:
             assert addr < 23
-            self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Interrupt))
-            self.emulator.registers[Register.IH].set(self.emulator.memory.read(DMA.Addresses[addr] - 0x18) & 0x7FFFFF)
-            self.emulator.memory.write(0x000023, (1 << addr))
-            if addr > 11:
+            self.interrupt(addr)
+            if data is None:
                 data = self.emulator.memory.read(DMA.Addresses[addr + 1]) & 0x7FFFFF
             else:
                 self.emulator.memory.write(DMA.Addresses[addr + 1], data | 0x800000)
             return data
         except:
             self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Halt))
+
+    def interrupt(self, addr):
+        self.emulator.registers[Register.SR].set(self.emulator.registers[Register.SR].get() | (1 << StatusBits.Interrupt))
+        self.emulator.registers[Register.IH].set(self.emulator.memory.read(DMA.Addresses[addr] - 0x18) & 0x7FFFFF)
+        self.emulator.memory.write(0x000023, (1 << addr))
 
 
 class NonExecutionError(Exception):
@@ -423,10 +436,12 @@ class HaltError(Exception):
 class Emu23(object):
     RegisterCount = 64
 
-    def __init__(self, debug=False, timeout=None, instr_list=False):
+    def __init__(self, debug=False, timeout=None, instr_list=False, emulate_display=False, wrap_uart=False):
         self._showdebug = debug
         self._timeout = timeout
         self._instr_list = instr_list
+        self._emulate_display = emulate_display
+        self._wrap_uart = wrap_uart
         self.debug = ""
         self.registers = [Register(id=i) for i in xrange(Emu23.RegisterCount)]
         self.operations = [
@@ -463,7 +478,7 @@ class Emu23(object):
             lambda: None,  # 0x1D
             self.halt,  # HLT
         ]
-        self.memory = Memory()
+        self.memory = Memory(self)
         self.dma = DMA(self)
 
     def _setFlags(self, res, mask):
@@ -577,7 +592,8 @@ class Emu23(object):
 
     def run(self, filename):
         for word in self._run(filename):
-            self.display()
+            if self._emulate_display:
+                self.display()
             if self._timeout is not None:
                 time.sleep(self._timeout)
 
@@ -649,6 +665,12 @@ class Emu23(object):
         self._writeText(0x7FF905, "{:06X}".format(self.registers[Register.IH].get()), 0x30)
         self._writeText(0x7FF90C, "IR", 0x50)
         self._writeText(0x7FF90F, "{:06X}".format(self.registers[Register.IR].get()), 0x30)
+    def send_key(self, ch):
+        if self._wrap_uart:
+            print ch,
+            self.dma.access(6, ch)
+        else:
+            self.dma.access(3, ch)
 
     def display(self):
         db = self.registers[Register.DB].get()
@@ -679,12 +701,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file", action="store", help="The file containing the bytecode.")
     parser.add_argument("--single-step", "-s", action="store_true", default=False, help="Wait after execution of one command.")
-    parser.add_argument("--debug", "-d", action="store_true", default=False, help="Display debugging Information.")
+    parser.add_argument("--debug", action="store_true", default=False, help="Display debugging Information.")
     parser.add_argument("--timeout", "-t", type=float, default=None, help="Timeout between two instructions.")
-    parser.add_argument("--list", "-l", action="store_true", default=False)
+    parser.add_argument("--list", "-l", action="store_true", default=False, help="List all operations as the get executed.")
+    parser.add_argument("--show-display", action="store_true", default=False, help="Emulate the display inside the console.")
+    parser.add_argument("--wrap-uart", action="store_true", default=False, help="Emulate a UART Interface in the console.")
 
     args = parser.parse_args()
-    e = Emu23(args.debug, args.timeout, args.list)
+    e = Emu23(args.debug, args.timeout, args.list, args.show_display, args.wrap_uart)
     KeyListener(e)
     if args.single_step:
         e.singleStep(args.file)
