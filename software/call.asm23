@@ -1,0 +1,33 @@
+%This is test file for the asm23
+%author: Hanno Sternberg <hanno@almostintelligent.de>
+%
+    INC base.asm23
+
+    ORG 0x00000B
+% offset 0x00000B - 0x000022  Interrupt vectors
+:IRQRST @init     % Reset Interrupt
+:IRQTIM #0x000000 % Timer Interrupt
+        #0x000000
+:IRQKEY #0x000000 % Keyboard Interrupt
+:IRQMOU #0x000000 % Mouse Interrupt
+:IRQUTX #0x000000 % UART TX Interrupt
+:IRQURX #0x000000 % UART RX Interrupt
+
+    INC dma.asm23 % include DMA addressess
+    INC irq.asm23 % include Interrupts
+
+    ORG 0x000042
+% offset 0x000042: Here be programs
+:init   SET R2 #5
+        SET R3 #3
+        CALL @mul
+        HLT
+
+% Calculates R1 = R2 * R3
+:mul    SET R1 #0
+:mloop  CMP R2 #0
+        BRA @retmul
+        ADD R1 R3 R1
+        SUB R2 #1 R2
+        JMP @mloop
+:retmul RET
