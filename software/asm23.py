@@ -214,7 +214,11 @@ class A23Syntax(object):
              | (Literal("VAR") + Group(Number)) \
              | (Literal("ORG") + Group(Number)) \
              | (Literal("INC") + Group(File)) \
-             | (Literal("NAME") + Group(GPRegister + Word(alphanums + "_")))
+             | (Literal("NAME") + Group(GPRegister + Word(alphanums + "_"))) \
+             | (Literal("PUSH") + Group(RegX)) \
+             | (Literal("POP") + Group(RegX)) \
+             | (Literal("CALL") + Group(Addrs)) \
+             | (Literal("RET") + Group(Empty())) \
              )
 
     Instr.setParseAction(lambda s, l, toks: toks.insert(0, "INSTR"))
@@ -310,6 +314,27 @@ class A23Parser(object):
                     ast.append(obj)
             elif isinstance(obj.instr, Instruction) and obj.instr.opcode == "NAME":
                 self.names[obj.instr.args[1]] = obj.instr.args[0]
+            elif isinstance(obj.instr, Instruction) and obj.instr.opcode == "PUSH":
+                ast.append(CodeObject(obj.label, Instruction(Operation("STR"), ob.instr.args[0], Register("SP")), source=obj.source))
+                ast.append(CodeObject("", Instruction(Operation("SET"), Register("RX"), Constant(1))))
+                ast.append(CodeObject("", Instruction(Operation("SUB"), Register("SP"), Register("RX"), Register("SP"))))
+            elif isinstance(obj.instr, Instruction) and obj.instr.opcode == "POP":
+                ast.append(CodeObject(obj.label, Instruction(Operation("LDR"), Register("SP"), ob.instr.args[0]), source=obj.source))
+                ast.append(CodeObject("", Instruction(Operation("SET"), Register("RX"), Constant(1))))
+                ast.append(CodeObject("", Instruction(Operation("ADD"), Register("SP"), Register("RX"), Register("SP"))))
+            elif isinstance(obj.instr, Instruction) and obj.instr.opcode == "CALL":
+                ast.append(CodeObject(obj.label, Instruction(Operation("CPR"), Register("PC"), Register("RA")), source=obj.source))
+                ast.append(CodeObject("", Instruction(Operation("SET"), Register("RB"), Constant(8))))
+                ast.append(CodeObject("", Instruction(Operation("ADD"), Register("RA"), Register("RB"), Register("RX"))))
+                ast.append(CodeObject("", Instruction(Operation("STR"), Register("RX"), Register("SP"))))
+                ast.append(CodeObject("", Instruction(Operation("SET"), Register("RX"), Constant(1))))
+                ast.append(CodeObject("", Instruction(Operation("SUB"), Register("SP"), Register("RX"), Register("SP"))))
+                ast.append(CodeObject("", Instruction(Operation("SET"), Register("RX"), Address(obj.instr.args[1]))))
+                ast.append(CodeObject("", Instruction(Operation("JMP"), Register("RX"))))
+            elif isinstance(obj.instr, Instruction) and obj.instr.opcode == "RET":
+                ast.append(CodeObject(obj.label, Instruction(Operation("SET"), Register("RX"), Constant(1)), source=obj.source))
+                ast.append(CodeObject("", Instruction(Operation("ADD"), Register("SP"), Register("RX"), Register("SP"))))
+                ast.append(CodeObject("", Instruction(Operation("LDR"), Register("SP"), Register("PC"))))
             elif isinstance(obj.instr, Instruction):
                 lbl = obj.label
                 for i in range(len(obj.instr.args)):
@@ -347,11 +372,11 @@ class A23Parser(object):
             if isinstance(obj.instr, Instruction) and obj.instr.opcode == "ORG":
                 addr = int(obj.instr.args[0], 16 if obj.instr.args[0].startswith("0x") else 10)
                 continue
+            if obj.label is not None and obj.label != "":
+                self.labelLoc[obj.label.val] = addr
             if isinstance(obj.instr, Instruction) and obj.instr.opcode == "VAR":
                 addr += int(obj.instr.args[0], 16 if obj.instr.args[0].startswith("0x") else 10)
                 obj.instr = Constant("0x00000")
-            if obj.label is not None and obj.label != "":
-                self.labelLoc[obj.label.val] = addr
             ast.append(obj)
             addr += 1
         self.ast = sorted(ast, key=lambda o: obj.addr)
