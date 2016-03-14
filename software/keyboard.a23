@@ -12,7 +12,7 @@
 #0x000042
 #0x000000
 #0x000000
-#0x000047
+#0x000063
 #0x000000
 #0x000000
 #0x000000
@@ -57,25 +57,79 @@
 #0x000000
 #0x000000
 #0x001DEA
+% irq.asm23[2] :IRQ    BIT SR SR #0xE   % Reset Interrupt-Flag in SR
 BIT SR SR #0x00000E
+% irq.asm23[3] SET IS #0x23     % Set constant interrupt selection address
 SET IS #0x000023
+% irq.asm23[4] LDR IS IV        % Load interrupt vector
 LDR IS IV
+% irq.asm23[5] AND IV IM IS     % Mask interrupt vector with interrupt mask
 AND IV IM IS
+% irq.asm23[6] BRA IR           % On inactive Interrupt Return to normal program
 BRA IR
+% irq.asm23[7] JMP IH           % Jump to interrupt handler
 JMP IH
+% irq.asm23[8] HLT
 HLT 
+% keyboard.asm23[22] :init   BIT IM IM #0x23 % Active keyboard interrupts
 BIT IM IM #0x000023
+% keyboard.asm23[23] :main   NOP % Nothing to do while waiting for the interrupt
 NOP 
+% keyboard.asm23[24] CMP $LastKey #0
+SET RB #0x000000
+CMP R1 RB
+% keyboard.asm23[25] BRA @main
 SET RX #0x000043
-JMP RX
-HLT 
-SET RX #0x000027
-LDR RX R1
+BRA RX
+% keyboard.asm23[26] CMP $LastKey #10 % Check for return key
+SET RB #0x00000A
+CMP R1 RB
+% keyboard.asm23[27] BRA @lf
+SET RX #0x00005C
+BRA RX
+% keyboard.asm23[28] BIT $LastKey $LastKey #0x33 % Set Color
 BIT R1 R1 #0x000033
+% keyboard.asm23[29] BIT $LastKey $LastKey #0x34 % Set Color
 BIT R1 R1 #0x000034
+% keyboard.asm23[30] BIT $LastKey $LastKey #0x35 % Set Color
 BIT R1 R1 #0x000035
+% keyboard.asm23[31] STR $LastKey DM
 STR R1 DM
+% keyboard.asm23[32] SET $LastKey #0
+SET R1 #0x000000
+% keyboard.asm23[33] ADD #1 DM DM
 SET RA #0x000001
 ADD RA DM DM
+% keyboard.asm23[34] ADD #1 $X $X
+SET RA #0x000001
+ADD RA R2 R2
+% keyboard.asm23[35] CMP $X #80
+SET RB #0x000050
+CMP R2 RB
+% keyboard.asm23[36] BNE @main
+SET RX #0x000043
+BNE RX
+% keyboard.asm23[37] SET $X #0
+SET R2 #0x000000
+% keyboard.asm23[38] JMP @main
+SET RX #0x000043
+JMP RX
+% keyboard.asm23[39] :lf     SET $LastKey #0
+SET R1 #0x000000
+% keyboard.asm23[40] SUB DM $X DM
+SUB DM R2 DM
+% keyboard.asm23[41] ADD #80 DM DM
+SET RA #0x000050
+ADD RA DM DM
+% keyboard.asm23[42] JMP @main
+SET RX #0x000043
+JMP RX
+% keyboard.asm23[44] HLT
+HLT 
+% keyboard.asm23[47] :keyISR LDR @DMAKEY $LastKey
+SET RX #0x000027
+LDR RX R1
+% keyboard.asm23[48] JMP IR % Return to normal program
 JMP IR
+% keyboard.asm23[50] HLT
 HLT 

@@ -3,7 +3,7 @@
 % License: MIT
 %
 
-        INC base.asm23
+        INC inc/base.asm23
 
 ORG 0x00000B
 % offset 0x00000B - 0x000022  Interrupt vectors
@@ -15,47 +15,38 @@ ORG 0x00000B
 :IRQUTX #0x000000 % UART TX Interrupt
 :IRQURX #0x000000 % UART RX Interrupt
 
-        INC dma.asm23 % include DMA addressess
-        INC irq.asm23 % include Interrupts
+        INC inc/dma.asm23 % include DMA addressess
+        INC inc/irq.asm23 % include Interrupts
 
 % offset 0x000042: Here be programs
         ORG 0x000042
 % Initialize everything
 % 2 Screen Buffer @7FE200 and @7FEC00
 %
-        NAME R42 Screen     % The currently displayed screen
-        NAME R40 Screen1    % The first buffer
-        NAME R41 Screen2    % The second buffer
-        NAME R44 BGColor
-        NAME R45 FGColor
-:init   SET BP #0x7FE200 % Set Base Pointer downward to make room for
-                         % both screen buffers
-        % SET DB #0x7FEC00
-        SET $Screen1 #0xDFF
-        BIT $Screen1 $Screen1 #0x2C % Set Bit 12 -> 0x1DFF
-        NOT $Screen1 $Screen1       % -> 0x7FE200
-        SET $Screen2 #0x3FF
-        BIT $Screen2 $Screen2 #0x2C % Set Bit 12 -> 0x13FF
-        NOT $Screen2 $Screen2       % -> 0x7FEC00
-        CPR $Screen1 $Screen
-        % Color -> Bright white
-        SET $FGColor #0x2
-        LSL $FGColor #19 $FGColor
-        SET $BGColor #0x2
-        LSL $BGColor #15 $BGColor
+        NAME R43 FGRed
+        NAME R44 FGGreen
+        NAME R45 CursorColor
+:init   SET $FGRed #0x1
+        LSL $FGRed #19 $FGRed
+        SET $FGGreen #0x2
+        LSL $FGGreen #19 $FGGreen
+        SET $CursorColor #0x33
+        LSL $CursorColor #15 $CursorColor
         BIT IM IM #0x23  % Active keyboard interrupts
         JMP @create
 
-% Main loop
-:main JMP @main
+% Variables
+:buffer VAR 81
 
 % Move around the field
         NAME R20 LastKey
         NAME R21 CursorAddr
 :create CPR DM $CursorAddr
-        OR #0x5F $BGColor RX
+        OR #0x5F $CursorColor RX
         STR RX $CursorAddr
 :move   NOP
+        NOP
+        NOP
         NOP
         NOP
         CMP $LastKey #1
@@ -68,86 +59,181 @@ ORG 0x00000B
         BRA @right
         CMP $LastKey #0x20  % Space
         BRA @space
+        CMP $LastKey #0x0A  % Return
+        BRA @enter
         JMP @move
 % Up Arrow Key
 :up     SET $LastKey #0
         STR #0x20 $CursorAddr
         SUB $CursorAddr #80 $CursorAddr
-        OR #0x5F $BGColor RX
+        OR #0x5F $CursorColor RX
         STR RX $CursorAddr
         JMP @move
 % Down Arrow Key
 :down   SET $LastKey #0
         STR #0x20 $CursorAddr
         ADD $CursorAddr #80 $CursorAddr
-        OR #0x5F $BGColor RX
+        OR #0x5F $CursorColor RX
         STR RX $CursorAddr
         JMP @move
 % Left Arrow Key
 :left   SET $LastKey #0
         STR #0x20 $CursorAddr
         SUB $CursorAddr #1 $CursorAddr
-        OR #0x5F $BGColor RX
+        OR #0x5F $CursorColor RX
         STR RX $CursorAddr
         JMP @move
 % Right Arrow Key
 :right  SET $LastKey #0
         STR #0x20 $CursorAddr
         ADD $CursorAddr #1 $CursorAddr
-        OR #0x5F $BGColor RX
+        OR #0x5F $CursorColor RX
         STR RX $CursorAddr
         JMP @move
 % Space Key
 :space  SET $LastKey #0
-        OR #0x40 $FGColor RX
+        OR #0x40 $FGGreen RX
         STR RX $CursorAddr
         ADD $CursorAddr #1 $CursorAddr
-        OR #0x5F $BGColor RX
+        OR #0x5F $CursorColor RX
         STR RX $CursorAddr
         JMP @move
+:enter  JMP @gol
         HLT
 
 % Game of Life: Iterate all cells
 %
-        NAME R1 CellAddr
-        NAME R2 CellX
-        NAME R3 CellY
-        NAME R4 CellValue
-:gol    CMP $Screen $Screen1
-        BRA @scr2
-        % Select Screen Buffer 1
-        CPR $Screen1 $CellAddr
-        CPR $Screen2 DB
-        CPR $Screen2 $Screen
-        BRA @scrsel
-        % Select Screen Buffer 2
-:scr2   CPR $Screen2 $CellAddr
-        CPR $Screen1 DB
-        CPR $Screen1 $Screen
-:scrsel NOP
+        NAME R1 CellX
+        NAME R2 CellY
+        NAME R3 Cell
+:gol    CPR DB DM
+        OR #0x5F $CursorColor RX
+        STR RX DM
         SET $CellX #0
 % for field_x in (0..79)
 :for_x  SET $CellY #0
 % for field_y in (0..29)
-:for_y  LDR $CellAddr $CellValue    % Value of the current cell
+:for_y  LDR DM $Cell    % Value of the current cell
+        AND $Cell #0xFF $Cell  % Mask Color Information
+        NAME R4 Neighbors
+        NAME R5 NeighborAddr
+        NAME R6 Neighbor
+        NAME R7 Buffer
+        % Load Buffer for current cell
+        SET $Buffer @buffer
+        ADD $Buffer $CellX $Buffer
+        % Upper cells
+        CMP $CellY #0
+        BRA @skpne
         % northwest
+        CMP $CellX #0
+        BRA @skpnw
+        SUB $Buffer #1 RX
+        LDR RX $Neighbor
+        CMP $Neighbor #0x5F
+        BNE @skpnw
+        ADD $Neighbors #1 $Neighbors
         % north
+:skpnw  LDR $Buffer $Neighbor
+        CMP $Neighbor #0x5F
+        BNE @skpn
+        ADD $Neighbors #1 $Neighbors
         % northeast
+:skpn   CMP $CellX #79
+        BRA @skpne
+        ADD $Buffer #1 RX
+        LDR RX $Neighbor
+        CMP $Neighbor #0x5F
+        BNE @skpne
+        ADD $Neighbors #1 $Neighbors
         % east
+:skpne  CMP $CellX #0
+        BRA @skpe
+        ADD DM #1 RX
+        LDR RX $Neighbor
+        CMP $Neighbor #0x5F
+        BNE @skpe
+        ADD $Neighbors #1 $Neighbors
+        % lower cells
+:skpe   CMP $CellY #29
+        BRA @skpsw
         % southeast
+        CMP $CellX #79
+        BRA @skpse
+        ADD DM #81 RX
+        LDR RX $Neighbor
+        CMP $Neighbor #0x5F
+        BNE @skpse
+        ADD $Neighbors #1 $Neighbors
         % south
+:skpse  ADD DM #80 RX
+        LDR RX $Neighbor
+        CMP $Neighbor #0x5F
+        BNE @skps
+        ADD $Neighbors #1 $Neighbors
         % southwest
+:skps   CMP $CellX #0
+        BRA @skpsw
+        ADD DM #79 RX
+        LDR RX $Neighbor
+        CMP $Neighbor #0x5F
+        BNE @skpsw
+        ADD $Neighbors #1 $Neighbors
         % west
-        ADD #1 $CellAddr $CellAddr  % Select next cell
-        ADD #1 R2 R2
-        CMP R2 #30
-        BRA @end_y
-        JMP @for_y
-:end_y  ADD #1 R1 R1
-        CMP R1 #80
-        BRA @end_x
-        JMP @for_x
-:end_x  NOP
+:skpsw  CMP $CellX #0
+        BRA @buf
+        ADD $Buffer #80 RX
+        LDR RX $Neighbor
+        CMP $Neighbor #0x5F
+        BNE @buf
+        ADD $Neighbors #1 $Neighbors
+% Write current cell to buffer
+:buf    STR $Cell $Buffer
+% Is the current cell alive?
+        CMP $Cell #0x5F  % '@'
+        BRA @alive
+        CMP $Cell #0x20  % ' '
+        BRA @dead
+        CMP $Cell #0x4F  % 'O'
+        BRA @corpse
+% The cell is something else, best leave it undisturbed
+        JMP @next
+% Alive cells with 2 or 3 neighbors stay alive
+:alive  CMP $Neighbors #2
+        BRA @spawn
+        CMP $Neighbors #3
+        BRA @spawn
+        JMP @die
+% Dead cells with 3 neighbors spawn a new offspring
+:dead   CMP $Neighbors #3
+        BRA @spawn
+        JMP @die
+% Corpse cells are dead cells
+:corpse CMP $Neighbors #3
+        BRA @spawn
+        JMP @clear
+% Create life, where there is none
+:spawn  OR #0x40 $FGGreen RX
+        STR RX $CursorAddr
+        JMP @next
+% Exterminate!
+:die    OR #0x4F $FGRed RX
+        STR RX $CursorAddr
+        JMP @next
+% Clear the remains
+:clear  STR #0x20 $CursorAddr
+        JMP @next
+% Select the next cell
+:next   ADD DM #1 DM  % Select next cell
+        OR #0x5F $CursorColor RX
+        STR RX DM
+        ADD $CellY #1 $CellY
+        CMP $CellY #30
+        BNE @for_y
+        ADD $CellX #1 $CellX
+        CMP $CellX #80
+        BNE @for_x
+        JMP @gol
         HLT
 
 % Keyboard Interrupt

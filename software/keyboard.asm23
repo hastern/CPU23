@@ -1,7 +1,7 @@
 %This is test file for the asm23
 %author: Hanno Sternberg <hanno@almostintelligent.de>
 %
-    INC base.asm23
+    INC inc/base.asm23
 
     ORG 0x00000B
 % offset 0x00000B - 0x000022  Interrupt vectors
@@ -13,24 +13,39 @@
 :IRQUTX #0x000000 % UART TX Interrupt
 :IRQURX #0x000000 % UART RX Interrupt
 
-    INC dma.asm23 % include DMA addressess
-    INC irq.asm23 % include Interrupts
+    INC inc/dma.asm23 % include DMA addressess
+    INC inc/irq.asm23 % include Interrupts
 
     ORG 0x000042
 % offset 0x000042: Here be programs
+        NAME R1 LastKey
+        NAME R2 X
 :init   BIT IM IM #0x23 % Active keyboard interrupts
 :main   NOP % Nothing to do while waiting for the interrupt
+        CMP $LastKey #0
+        BRA @main
+        CMP $LastKey #10 % Check for return key
+        BRA @lf
+        BIT $LastKey $LastKey #0x33 % Set Color
+        BIT $LastKey $LastKey #0x34 % Set Color
+        BIT $LastKey $LastKey #0x35 % Set Color
+        STR $LastKey DM
+        SET $LastKey #0
+        ADD #1 DM DM
+        ADD #1 $X $X
+        CMP $X #80
+        BNE @main
+        SET $X #0
+        JMP @main
+:lf     SET $LastKey #0
+        SUB DM $X DM
+        ADD #80 DM DM
         JMP @main
 % Finally Stop
         HLT
 
 % Keyboard Interrupt
-:keyISR LDR @DMAKEY R1
-        BIT R1 R1 #0x33
-        BIT R1 R1 #0x34
-        BIT R1 R1 #0x35
-        STR R1 DM
-        ADD #1 DM DM
+:keyISR LDR @DMAKEY $LastKey
         JMP IR % Return to normal program
 % Should never get here
         HLT
