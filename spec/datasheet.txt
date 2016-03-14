@@ -1,5 +1,3 @@
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
 
       +--------------------------------------------------------------+
       |                                                              |
@@ -49,12 +47,6 @@
 
 
 
-
- 53                                                                            1
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
-
 # ==[ SUMMARY ]=============================================================== #
 
 - Wordsize:
@@ -102,14 +94,6 @@ The document will use the following short hand forms:
 
 
 
-
-
-
-108                                                                            2
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
-
 # ==[ STATUS REGISTER ]======================================================= #
 
       22  21  20  19  18  17  16  15  14  13  12  11  10  09  08  07  06  05
@@ -137,32 +121,6 @@ The document will use the following short hand forms:
 
 In the later of this document SR(x) refers to the corresponding bit in the SR.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-163                                                                            3
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 
 # ==[ INSTRUCTION SET ]======================================================= #
@@ -206,20 +164,6 @@ There are 4 different types of instructions:
 
 
 
-
-
-
-
-
-
-
-
-
-218                                                                            4
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
-
 ## --{ REGISTER SELECTION }-------------------------------------------------- ##
 
 The 64 processor registers can be selected by a 6 bit value.
@@ -251,30 +195,6 @@ The 64 processor registers can be selected by a 6 bit value.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-273                                                                            5
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
-
 ## --{ OPCODES }------------------------------------------------------------- ##
 
 Every OpCode has a fixed length of 5 bit.
@@ -283,10 +203,11 @@ Every OpCode has a fixed length of 5 bit.
     ----- | ----        | -----------
     0x00  | NOP         | No Operation.
     0x01  | LDR a   d   | Load  `[a]` to `(d)`.
-    0x02  | STR a b     | Store `(a)` to `[b]`.
+    0x02  | STR a   d   | Store `(a)` to `[d]`.
     0x03  | CPR a   d   | Copy  `(a)` to `(d)`.
     0x04  | SET     d c | Set   `(d)` to `c`.
-    0x05  | BIT a   d c | Copy `(a)` to `(d)` but (re-)set bit `c & 0x1F` to `c & 0x20`.
+    0x05  | BIT a   d c | Copy `(a)` to `(d)` but (re-)set
+          |             |                     bit `c & 0x1F` to `c & 0x20`.
     0x06  | ADD a b d   | Sets `(d)` to `(a) + (b)`.
           |             |   Clears and sets SR(Z;T;V;C)
     0x07  | SUB a b d   | Sets `(d)` to `(a) - (b)`.
@@ -320,28 +241,18 @@ Every OpCode has a fixed length of 5 bit.
 
 
 
-
-
-
-
-
-328                                                                            6
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
-
 # ==[ MEMORY ]================================================================ #
 
-The memory is organised in four main blocks.
+The memory is organized in four main blocks.
 
 1. Block: DMA Area,
       Basic operating system,
       hardware addresses and interrupt handling
-2. Block: Mixed (user) programm an data memory
+2. Block: Mixed (user) program an data memory
 3. Block: Stack
 4. Block: Display memory
 
-Diagramm:
+Diagram:
 
     +--------------------+ 0x000000
     |                    |
@@ -361,7 +272,7 @@ Diagramm:
     |                    |
     |        Stack       |
     |                    |
-    +--------------------+ (BP) 0x7FF600
+    +--------------------+ (BP) 0x7FF000
     |                    |
     |   Display Memory   |
     |                    |
@@ -380,9 +291,18 @@ as a command word.
 
 
 
-383                                                                            7
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## --{ DMA & SPECIAL PURPOSE ADDRESSES }------------------------------------- ##
 
@@ -409,35 +329,6 @@ DMADATA contains the data to be written or to be read.
 
 External access on a DMA Address will trigger the corresponding Interrupt.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-438                                                                            8
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 
 # ==[ INTERRUPT HANDLING ]==================================================== #
@@ -490,14 +381,10 @@ If SR(I) is set:
      0x000020   | 0x000039 | 0x200000 |           |
      0x000021   | 0x00003A | 0x400000 |           |
 
-493                                                                            9
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
 
 # ==[ DEBUG INTERFACE ]======================================================= #
 
-CPU23LS features a sophisticated debugging interface integrated deeply into the
+CPU23 features a sophisticated debugging interface integrated deeply into the
 core of the CPU. Communication with the outside world is archived over a UART
 connection.
 
@@ -528,81 +415,32 @@ may follow in consequential words.
     [Debug Instructions]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-548                                                                           10
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
 # ==[ TIMER ]================================================================= #
 
-  TODO
+CPU23 has one integrated timer, which is controlled by the Registers TR and PR.
+If the prescaler (PR) is anything but 0 the timer is enabled. After the number
+of cycles specified in PR, the TR register will be decremented. If it reaches
+0 the Timer interrupts will be enabled.
 
 
+# ==[ UART ]================================================================== #
 
+To communicate with other devices, CPU23 features an integrated UART-Controller.
+Data is transfered in groups of 3 Bytes forming a 23-Bit dataword.
+To minimized bandwidth 8N1 Mode at 9600 Baud is used.
 
+             Byte 1                 Byte 2                  Byte 3
+    +---+-------------+---+ +---+-------------+---+ +---+-------------+---+
+    | 0 | Bit 23 - 16 | 1 | | 0 | Bit 15 -  8 | 1 | | 0 | Bit  7 -  0 | 1 |
+    +---+-------------+---+ +---+-------------+---+ +---+-------------+---+
 
+Writing a word to the UART TX address (0x000029) will trigger the
+controller into sending the data. After the data is send, the controller
+will trigger a UART TX interrupt.
 
+When the controller has received a word, it will trigger an UART RX
+interrupt.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-603                                                                           11
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
 
 # ==[ DISPLAY ]=============================================================== #
 
@@ -610,7 +448,7 @@ The CPU23 has an integrated text display driver.
 An integrated VGA controller supports a fixed resolution of 640x480 pixels with
 a color depth of 12-Bit per pixel.
 
-Every character has a dimension of 8x16 resulting in a display size of 80x30
+Every character has a dimension of 8x12 resulting in a display size of 80x40
 characters.
 
 One WORD of display memory is split in four parts. The leftmost 7-bits define
@@ -651,174 +489,7 @@ The character set is ASCII compatible.
 |       |       |       |       |       |       |       |       |       |
 
 
+# ==[ NOTES ]================================================================= #
 
+# ==[ NOTES ]================================================================= #
 
-
-
-658                                                                           12
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
-
-# ==[ VHDL-MODULES ]========================================================== #
-
-
-
-
-
-  - Internal
-    - Pipeline
-    - ALU
-    - Memory Controller
-      - SRAM / DRAM
-    - Debug Controller
-      - UART
-    - Timer
-    - Display
-      - VGA
-    - Flash / External Memory
-  - External
-    - USB-HID / PS2
-      - Keyboard
-      - Mouse
-    - UART
-  -
-  -
-  -
-  -
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-713                                                                           13
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
-
-                                   NOTES
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-768                                                                           14
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
-
-
-                                   NOTES
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-823                                                                           15
-   ----- DO NOT DISTRIBUTE ----- PROJECT CPU23 ----- DO NOT DISTRIBUTE -----
