@@ -86,3 +86,8 @@ htmlcov/
 nosetests.xml
 coverage.xml
 
+
+*.a23
+*.hex
+hardware/vhdl/work/
+
