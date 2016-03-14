@@ -561,13 +561,12 @@ class Emu23(object):
                 # --- 1 Fetch
                 word = self.memory.read(self.registers[Register.PC].get())
                 # --- 2 Decode
-                instr = Instruction.parse(self, word)
+                self.last_instr = Instruction.parse(self, word)
                 if self._instr_list:
-                    sys.stderr.write(str(instr) + "\n")
-                self.writeDebugInfo(word, instr)
+                    sys.stderr.write("{:30}\r".format(str(self.last_instr)))
                 yield word
                 # --- 3 Execute
-                dest = instr.execute(self)
+                dest = self.last_instr.execute(self)
                 # --- 4 Increment PC, if the instruction is not a jump
                 if dest != self.registers[Register.PC]:
                     self.registers[Register.PC].set(self.registers[Register.PC].get() + 1)
@@ -581,7 +580,6 @@ class Emu23(object):
                     # Set PC to basic interrupt handling routine
                     self.registers[Register.PC].set(0x00003B)
         except HaltError:
-            # self.writeDebugInfo(word, instr)
             self.display()
 
     def singleStep(self, filename):
@@ -611,70 +609,6 @@ class Emu23(object):
         for addr, char in enumerate(text, start=offset):
             self.memory.write(addr, (color << 15) | ord(char))
 
-    def writeDebugInfo(self, word, instr):
-        if not self._showdebug:
-            return
-        # 0x7FF600       _0     _1     _2     _3     _4     _5     _6     _7     _8     _9
-        # 0x7FF650 R0_ 000000 000000 000000 000000 000000 000000 000000 000000 000000 000000
-        # 0x7FF6A0 R1_ 000000 000000 000000 000000 000000 000000 000000 000000 000000 000000
-        # 0x7FF6F0 R2_ 000000 000000 000000 000000 000000 000000 000000 000000 000000 000000
-        # 0x7FF740 R3_ 000000 000000 000000 000000 000000 000000 000000 000000 000000 000000
-        # 0x7FF790 R4_ 000000 000000 000000 000000 000000 000000
-        # 0x7FF7E0
-        # 0x7FF830 PC 000000 opc rga rgb rgd #0xcccccc     SR FNORDXWITHGELCUZV000000
-        # 0x7FF880 RA 000000 RB 000000 RX 000000 RT 000000 FP 000000 SP 000000 BP 000000
-        # 0x7FFD00 DB 000000 DM 000000 IS 000000 IM 000000 IV 000000 IH 000000 IR 000000
-        #
-        self._writeText(0x7FF600, "      _0     _1     _2     _3     _4     _5     _6     _7     _8     _9  ", 0x10)
-        self._writeText(0x7FF650, "R0_ ", 0x10)
-        self._writeText(0x7FF654, " ".join(map(lambda r: "{:06X}".format(r.get()), self.registers[0:10])), 0x60)
-        self._writeText(0x7FF6A0, "R1_ ", 0x10)
-        self._writeText(0x7FF6A4, " ".join(map(lambda r: "{:06X}".format(r.get()), self.registers[10:20])), 0x60)
-        self._writeText(0x7FF6F0, "R2_ ", 0x10)
-        self._writeText(0x7FF6F4, " ".join(map(lambda r: "{:06X}".format(r.get()), self.registers[20:30])), 0x60)
-        self._writeText(0x7FF740, "R3_ ", 0x10)
-        self._writeText(0x7FF744, " ".join(map(lambda r: "{:06X}".format(r.get()), self.registers[30:40])), 0x60)
-        self._writeText(0x7FF790, "R4_ ", 0x10)
-        self._writeText(0x7FF794, " ".join(map(lambda r: "{:06X}".format(r.get()), self.registers[40:46])), 0x60)
-        self._writeText(0x7FF830, "PC", 0x50)
-        self._writeText(0x7FF833, "{:06X}".format(self.registers[Register.PC].get()))
-        self._writeText(0x7FF83A, Instruction.Names[instr.op], 0x20)
-        self._writeText(0x7FF83E, Register.Names[instr.a.id] if Instruction.RegisterUsage[instr.op][0] else "   ", 0x30 if Instruction.RegisterUsage[instr.op][0] and instr.a.id <= 45 else 0x90)
-        self._writeText(0x7FF842, Register.Names[instr.b.id] if Instruction.RegisterUsage[instr.op][1] else "   ", 0x30 if Instruction.RegisterUsage[instr.op][1] and instr.b.id <= 45 else 0x90)
-        self._writeText(0x7FF846, Register.Names[instr.d.id] if Instruction.RegisterUsage[instr.op][2] else "   ", 0x30 if Instruction.RegisterUsage[instr.op][2] and instr.d.id <= 45 else 0x90)
-        self._writeText(0x7FF84A, "#0x{:X}".format(instr.c) if Instruction.RegisterUsage[instr.op][3] else "        ", 0x50)
-        self._writeText(0x7FF858, "SR", 0x50)
-        sr = self.registers[Register.SR].get()
-        for i, c in zip(range(21, 0, -1), "FNORDXWITHGELCUZV"):
-            self._writeText(0x7FF85B + (21 - i), c, 0xF0 if ((sr >> i) & 0x1) == 1 else 0x80)
-        self._writeText(0x7FF880, "RA", 0x50)
-        self._writeText(0x7FF883, "{:06X}".format(self.registers[Register.RA].get()), 0x30)
-        self._writeText(0x7FF88A, "RB", 0x50)
-        self._writeText(0x7FF88D, "{:06X}".format(self.registers[Register.RB].get()), 0x30)
-        self._writeText(0x7FF894, "RX", 0x50)
-        self._writeText(0x7FF897, "{:06X}".format(self.registers[Register.RX].get()), 0x30)
-        self._writeText(0x7FF89E, "RT", 0x50)
-        self._writeText(0x7FF8A1, "{:06X}".format(self.registers[Register.RT].get()), 0x30)
-        self._writeText(0x7FF8A8, "FP", 0x50)
-        self._writeText(0x7FF8AB, "{:06X}".format(self.registers[Register.FP].get()), 0x30)
-        self._writeText(0x7FF8B2, "SP", 0x50)
-        self._writeText(0x7FF8B5, "{:06X}".format(self.registers[Register.SP].get()), 0x30)
-        self._writeText(0x7FF8BC, "BP", 0x50)
-        self._writeText(0x7FF8BF, "{:06X}".format(self.registers[Register.BP].get()), 0x30)
-        self._writeText(0x7FF8D0, "DB", 0x50)
-        self._writeText(0x7FF8D3, "{:06X}".format(self.registers[Register.DB].get()), 0x30)
-        self._writeText(0x7FF8DA, "DM", 0x50)
-        self._writeText(0x7FF8DD, "{:06X}".format(self.registers[Register.DM].get()), 0x30)
-        self._writeText(0x7FF8E4, "IS", 0x50)
-        self._writeText(0x7FF8E7, "{:06X}".format(self.registers[Register.IS].get()), 0x30)
-        self._writeText(0x7FF8EE, "IM", 0x50)
-        self._writeText(0x7FF8F1, "{:06X}".format(self.registers[Register.IM].get()), 0x30)
-        self._writeText(0x7FF8F8, "IV", 0x50)
-        self._writeText(0x7FF8FB, "{:06X}".format(self.registers[Register.IV].get()), 0x30)
-        self._writeText(0x7FF902, "IH", 0x50)
-        self._writeText(0x7FF905, "{:06X}".format(self.registers[Register.IH].get()), 0x30)
-        self._writeText(0x7FF90C, "IR", 0x50)
-        self._writeText(0x7FF90F, "{:06X}".format(self.registers[Register.IR].get()), 0x30)
     def send_key(self, ch):
         if self._wrap_uart:
             print ch,
@@ -684,26 +618,91 @@ class Emu23(object):
 
     def display(self):
         db = self.registers[Register.DB].get()
-        sys.stdout.write("\033[u")  # Restore Cursor Position
-        print ".---------------------."
-        print "|    EMULATOR 23      |"
-        print "+----------+----------+---------------------------------------------------------------------+"
         buf = []
         for y in xrange(30):
             line = []
-            line.append("| 0x{:06X} |".format(db + (y * 80)))
             for x in xrange(80):
                 word = self.memory.read(db + x + (y * 80))
                 char = word & 0x7F
-                fg   = (word >> 19) & 0xF
-                bg   = (word >> 15) & 0xF
-                line.append("\033[{};3{};4{}m".format(((fg >> 3) & 0x1), fg & 0x7, bg & 0x7))
-                line.append(chr(char))
-            line.append("\033[0m|")
+                if char == 0:
+                    line.append("\033[0m ")
+                else:
+                    fg   = (word >> 19) & 0xF
+                    bg   = (word >> 15) & 0xF
+                    line.append("\033[{};3{};4{}m{}".format(((fg >> 3) & 0x1), fg & 0x7, bg & 0x7, chr(char)))
+            line.append("\033[0m")
             buf.append("".join(line))
-        print "\n".join(buf)
-        print "'----------+--------------------------------------------------------------------------------'"
-        print self.debug
+        sr = self.registers[Register.SR].get()
+        status = []
+        for i, c in zip(range(21, 0, -1), "FNORDXWITHGELCUZV"):
+            status.append("\033[1;3{}m{}".format(7 if ((sr >> i) & 0x1) == 1 else 0, c))
+        bp = self.registers[Register.BP].get()
+        stack_addrs = range(bp - 6, bp + 1)
+        print """\033[u
+           .---------------.                        EMULATOR 23                             .-----------------.
+           |    Screen     |                                                                |    Registers    |
++----------+---------------+----------------------------------------------------------------+-----------------+-----------------------.
+| 0x{addr[0]:06X} |{line[0]:80}| \033[31m      0_     1_     2_     3_     4_   \033[0m |
+| 0x{addr[1]:06X} |{line[1]:80}| \033[31mR_0\033[0m \033[36m{Reg[0]:06X} {Reg[10]:06X} {Reg[20]:06X} {Reg[30]:06X} {Reg[40]:06X} \033[0m |
+| 0x{addr[2]:06X} |{line[2]:80}| \033[31mR_1\033[0m \033[36m{Reg[1]:06X} {Reg[11]:06X} {Reg[21]:06X} {Reg[31]:06X} {Reg[41]:06X} \033[0m |
+| 0x{addr[3]:06X} |{line[3]:80}| \033[31mR_2\033[0m \033[36m{Reg[2]:06X} {Reg[12]:06X} {Reg[22]:06X} {Reg[32]:06X} {Reg[42]:06X} \033[0m |
+| 0x{addr[4]:06X} |{line[4]:80}| \033[31mR_3\033[0m \033[36m{Reg[3]:06X} {Reg[13]:06X} {Reg[23]:06X} {Reg[33]:06X} {Reg[43]:06X} \033[0m |
+| 0x{addr[5]:06X} |{line[5]:80}| \033[31mR_4\033[0m \033[36m{Reg[4]:06X} {Reg[14]:06X} {Reg[24]:06X} {Reg[34]:06X} {Reg[44]:06X} \033[0m |
+| 0x{addr[6]:06X} |{line[6]:80}| \033[31mR_5\033[0m \033[36m{Reg[5]:06X} {Reg[15]:06X} {Reg[25]:06X} {Reg[35]:06X} {Reg[45]:06X} \033[0m |
+| 0x{addr[7]:06X} |{line[7]:80}| \033[31mR_6\033[0m \033[36m{Reg[6]:06X} {Reg[16]:06X} {Reg[26]:06X} {Reg[36]:06X}        \033[0m |
+| 0x{addr[8]:06X} |{line[8]:80}| \033[31mR_7\033[0m \033[36m{Reg[7]:06X} {Reg[17]:06X} {Reg[27]:06X} {Reg[37]:06X}        \033[0m |
+| 0x{addr[9]:06X} |{line[9]:80}| \033[31mR_8\033[0m \033[36m{Reg[8]:06X} {Reg[18]:06X} {Reg[28]:06X} {Reg[38]:06X}        \033[0m |
+| 0x{addr[10]:06X} |{line[10]:80}| \033[31mR_9\033[0m \033[36m{Reg[9]:06X} {Reg[19]:06X} {Reg[29]:06X} {Reg[39]:06X}        \033[0m |
+| 0x{addr[11]:06X} |{line[11]:80}|                                         |
+| 0x{addr[12]:06X} |{line[12]:80}| \033[35mPC\033[0m {PC:06X} \033[32m{opcode:3}\033[0m \033[33m{opa:3} {opb:3} {opd:3}\033[0m \033[35m{cst:9}\033[0m     |
+| 0x{addr[13]:06X} |{line[13]:80}| \033[35mSR\033[0m {SR:21}00000\033[0m               |
+| 0x{addr[14]:06X} |{line[14]:80}|                                         |
+| 0x{addr[15]:06X} |{line[15]:80}| \033[35mRA\033[0m \033[33m{RA:06X}\033[0m \033[35mRB\033[0m \033[33m{RB:06X}\033[0m \033[35mRX\033[0m \033[33m{RX:06X}\033[0m \033[35mRT\033[0m \033[33m{RT:06X}\033[0m |
+| 0x{addr[16]:06X} |{line[16]:80}| \033[35mTR\033[0m \033[33m{TR:06X}\033[0m \033[35mPR\033[0m \033[33m{PR:06X}\033[0m \033[35m  \033[0m \033[32m      \033[0m \033[35m  \033[0m \033[32m      \033[0m |
+| 0x{addr[17]:06X} |{line[17]:80}| \033[35mFP\033[0m \033[33m{FP:06X}\033[0m \033[35mSP\033[0m \033[33m{SP:06X}\033[0m \033[35mBP\033[0m \033[33m{BP:06X}\033[0m \033[35m  \033[0m \033[32m      \033[0m |
+| 0x{addr[18]:06X} |{line[18]:80}| \033[35mDB\033[0m \033[33m{DB:06X}\033[0m \033[35mDM\033[0m \033[33m{DM:06X}\033[0m \033[35m  \033[0m \033[32m      \033[0m \033[35m  \033[0m \033[32m      \033[0m |
+| 0x{addr[19]:06X} |{line[19]:80}| \033[35mIS\033[0m \033[33m{IS:06X}\033[0m \033[35mIM\033[0m \033[33m{IM:06X}\033[0m \033[35mIV\033[0m \033[33m{IV:06X}\033[0m \033[35m  \033[0m \033[32m      \033[0m |
+| 0x{addr[20]:06X} |{line[20]:80}| \033[35mIH\033[0m \033[33m{IH:06X}\033[0m \033[35mIR\033[0m \033[33m{IR:06X}\033[0m \033[35m  \033[0m \033[32m      \033[0m \033[35m  \033[0m \033[32m      \033[0m |
+| 0x{addr[21]:06X} |{line[21]:80}|                                         |
+| 0x{addr[22]:06X} |{line[22]:80}|  Stack                                  |
+| 0x{addr[23]:06X} |{line[23]:80}|  0x{stack_addr[6]:06X} 0x{stack_data[6]:06X}                      |
+| 0x{addr[24]:06X} |{line[24]:80}|  0x{stack_addr[5]:06X} 0x{stack_data[5]:06X}                      |
+| 0x{addr[25]:06X} |{line[25]:80}|  0x{stack_addr[4]:06X} 0x{stack_data[4]:06X}                      |
+| 0x{addr[26]:06X} |{line[26]:80}|  0x{stack_addr[3]:06X} 0x{stack_data[3]:06X}                      |
+| 0x{addr[27]:06X} |{line[27]:80}|  0x{stack_addr[2]:06X} 0x{stack_data[2]:06X}                      |
+| 0x{addr[28]:06X} |{line[28]:80}|  0x{stack_addr[1]:06X} 0x{stack_data[1]:06X}                      |
+| 0x{addr[29]:06X} |{line[29]:80}|  0x{stack_addr[0]:06X} 0x{stack_data[0]:06X}                      |
+'----------+--------------------------------------------------------------------------------+-----------------------------------------'
+{debug}""".format(addr=[db + (y * 80) for y in xrange(30)],
+                  line=buf,
+                  Reg=[self.registers[n].get() for n in xrange(46)],
+                  PC=self.registers[Register.PC].get(),
+                  opcode=Instruction.Names[self.last_instr.op],
+                  opa=Register.Names[self.last_instr.a.id] if Instruction.RegisterUsage[self.last_instr.op][0] else "",
+                  opb=Register.Names[self.last_instr.b.id] if Instruction.RegisterUsage[self.last_instr.op][1] else "",
+                  opd=Register.Names[self.last_instr.d.id] if Instruction.RegisterUsage[self.last_instr.op][2] else "",
+                  cst="#0x{:X}".format(self.last_instr.c) if Instruction.RegisterUsage[self.last_instr.op][3] else "",
+                  SR="".join(status),
+                  RA=self.registers[Register.RA].get(),
+                  RB=self.registers[Register.RB].get(),
+                  RX=self.registers[Register.RX].get(),
+                  RT=self.registers[Register.RT].get(),
+                  TR=self.registers[Register.TR].get(),
+                  PR=self.registers[Register.PR].get(),
+                  FP=self.registers[Register.FP].get(),
+                  SP=self.registers[Register.SP].get(),
+                  BP=self.registers[Register.BP].get(),
+                  DB=self.registers[Register.DB].get(),
+                  DM=self.registers[Register.DM].get(),
+                  IS=self.registers[Register.IS].get(),
+                  IM=self.registers[Register.IM].get(),
+                  IV=self.registers[Register.IV].get(),
+                  IH=self.registers[Register.IH].get(),
+                  IR=self.registers[Register.IR].get(),
+                  debug=self.debug,
+                  stack_addr=stack_addrs,
+                  stack_data=map(self.memory.read, stack_addrs)
+                  ),
 
 
 if __name__ == "__main__":
